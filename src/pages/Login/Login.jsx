@@ -28,7 +28,14 @@ export default function Login() {
             const res = await loginUser(form);
             saveToken(res.data.token);
 
-            navigate("/");
+            const role = res.data?.user?.role;
+            if (role === "admin") {
+                navigate("/admin");
+            } else if (role === "student") {
+                navigate("/student");
+            } else {
+                navigate("/");
+            }
             window.location.reload();
         } catch (err) {
             setError(err.response?.data?.message || "Login failed. Please check your credentials.");
