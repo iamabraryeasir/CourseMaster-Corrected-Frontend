@@ -23,9 +23,9 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
-## Complete Bug Reports & Exact Code Solves
-
 ---
+
+## BACKEND
 
 ### BUG-001: Plaintext Password Comparison Breaks All User Authentication
 - **Bug ID & Title**: `BUG-001` — Plaintext password comparison breaks user login (Code-5 bug)
@@ -99,40 +99,6 @@ All issues have been corrected across the frontend and backend repositories foll
     }
     ```
 - **Verification Status**: **Fixed & Verified** — Students can now enroll in courses without error.
-
----
-
-### BUG-003: Redux Store Payload Error Causes Student Dashboard Crash
-- **Bug ID & Title**: `BUG-003` — Redux store payload access error crashes Student Dashboard (Code-6 bug)
-- **Category**: Data Handling / Frontend State Management
-- **Priority & Severity**: **Critical / P1**
-- **Location & Steps to Reproduce**:
-  1. Log in as a student.
-  2. Navigate to the Student Dashboard at `/student`.
-- **Expected vs. Actual Result**:
-  - *Expected*: Dashboard renders the list of enrolled courses with progress bars.
-  - *Actual*: Entire page crashes with `TypeError: Cannot read properties of undefined (reading 'length')` at `StudentDashboard.jsx:172`.
-- **Severity & Evidence**:
-  - *Evidence*: `frontend/src/store/slices/enrollmentSlice.js`:
-    `fetchMyEnrollments` thunk returns `res.data` (the array). Accessing `.data` in the reducer produced `undefined`.
-- **The Solve (Code Fix)**:
-  - **File**: `frontend/src/store/slices/enrollmentSlice.js`
-  - **Before (Buggy Code)**:
-    ```javascript
-    .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
-        state.loading = false;
-        // Code-6 bug: action.payload is the array, but trying to access .data makes it undefined
-        state.enrollments = action.payload.data;
-    })
-    ```
-  - **After (Solved Code)**:
-    ```javascript
-    .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
-        state.loading = false;
-        state.enrollments = action.payload || [];
-    })
-    ```
-- **Verification Status**: **Fixed & Verified** — Enrolled courses and progress statistics load and render seamlessly.
 
 ---
 
@@ -351,6 +317,78 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
+### BUG-015: Banned Users Can Still Log In and Access the Application
+- **Bug ID & Title**: `BUG-015` — Banned user status is not checked during authentication
+- **Category**: Authentication & Authorization / Security
+- **Priority & Severity**: **Medium / P3**
+- **Location & Steps to Reproduce**:
+  1. Admin bans a user account in `/admin/users`.
+  2. Banned user attempts to log in at `/login`.
+- **Expected vs. Actual Result**:
+  - *Expected*: Login blocked with suspension notice.
+  - *Actual*: Login succeeded and JWT token was issued.
+- **Severity & Evidence**:
+  - *Evidence*: `backend/src/services/auth.service.js`:
+    `login()` lacked `isBanned` check.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/auth.service.js`
+  - **Before (Buggy Code)**:
+    ```javascript
+    const login = async ({ email, password }) => {
+      const user = await User.findOne({ email });
+      if (!user) throw new Error("Invalid email or password");
+      // No banned check
+    ```
+  - **After (Solved Code)**:
+    ```javascript
+    const login = async ({ email, password }) => {
+      const user = await User.findOne({ email });
+      if (!user) throw new Error("Invalid email or password");
+
+      if (user.isBanned) {
+        throw new Error("Your account has been suspended. Please contact support.");
+      }
+    ```
+- **Verification Status**: **Fixed & Verified** — Suspended accounts are immediately blocked from logging in.
+
+---
+
+## FRONTEND
+
+### BUG-003: Redux Store Payload Error Causes Student Dashboard Crash
+- **Bug ID & Title**: `BUG-003` — Redux store payload access error crashes Student Dashboard (Code-6 bug)
+- **Category**: Data Handling / Frontend State Management
+- **Priority & Severity**: **Critical / P1**
+- **Location & Steps to Reproduce**:
+  1. Log in as a student.
+  2. Navigate to the Student Dashboard at `/student`.
+- **Expected vs. Actual Result**:
+  - *Expected*: Dashboard renders the list of enrolled courses with progress bars.
+  - *Actual*: Entire page crashes with `TypeError: Cannot read properties of undefined (reading 'length')` at `StudentDashboard.jsx:172`.
+- **Severity & Evidence**:
+  - *Evidence*: `frontend/src/store/slices/enrollmentSlice.js`:
+    `fetchMyEnrollments` thunk returns `res.data` (the array). Accessing `.data` in the reducer produced `undefined`.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/store/slices/enrollmentSlice.js`
+  - **Before (Buggy Code)**:
+    ```javascript
+    .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
+        state.loading = false;
+        // Code-6 bug: action.payload is the array, but trying to access .data makes it undefined
+        state.enrollments = action.payload.data;
+    })
+    ```
+  - **After (Solved Code)**:
+    ```javascript
+    .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.enrollments = action.payload || [];
+    })
+    ```
+- **Verification Status**: **Fixed & Verified** — Enrolled courses and progress statistics load and render seamlessly.
+
+---
+
 ### BUG-010: Identical Radio Name Attribute Across All Quiz Questions
 - **Bug ID & Title**: `BUG-010` — Global radio group name prevents answering multiple quiz questions
 - **Category**: Functional Bugs / UI/UX
@@ -518,42 +556,6 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
-### BUG-015: Banned Users Can Still Log In and Access the Application
-- **Bug ID & Title**: `BUG-015` — Banned user status is not checked during authentication
-- **Category**: Authentication & Authorization / Security
-- **Priority & Severity**: **Medium / P3**
-- **Location & Steps to Reproduce**:
-  1. Admin bans a user account in `/admin/users`.
-  2. Banned user attempts to log in at `/login`.
-- **Expected vs. Actual Result**:
-  - *Expected*: Login blocked with suspension notice.
-  - *Actual*: Login succeeded and JWT token was issued.
-- **Severity & Evidence**:
-  - *Evidence*: `backend/src/services/auth.service.js`:
-    `login()` lacked `isBanned` check.
-- **The Solve (Code Fix)**:
-  - **File**: `backend/src/services/auth.service.js`
-  - **Before (Buggy Code)**:
-    ```javascript
-    const login = async ({ email, password }) => {
-      const user = await User.findOne({ email });
-      if (!user) throw new Error("Invalid email or password");
-      // No banned check
-    ```
-  - **After (Solved Code)**:
-    ```javascript
-    const login = async ({ email, password }) => {
-      const user = await User.findOne({ email });
-      if (!user) throw new Error("Invalid email or password");
-
-      if (user.isBanned) {
-        throw new Error("Your account has been suspended. Please contact support.");
-      }
-    ```
-- **Verification Status**: **Fixed & Verified** — Suspended accounts are immediately blocked from logging in.
-
----
-
 ### BUG-016: Missing "Manage Courses" Link in Admin Sidebar Navigation
 - **Bug ID & Title**: `BUG-016` — Admin sidebar lacks link to Manage Courses route
 - **Category**: Functional Bugs / Navigation
@@ -642,3 +644,9 @@ All issues have been corrected across the frontend and backend repositories foll
     </h2>
     ```
 - **Verification Status**: **Fixed & Verified** — Course cards maintain consistent grid layout and titles wrap cleanly.
+
+---
+
+## Summary of Verification & Status
+
+All 18 bugs (9 Backend, 9 Frontend) have been fixed, verified, and documented. Frontend builds cleanly with zero ESLint warnings and zero TypeScript/Vite bundle errors. Backend routes, authentication, database queries, and middleware logic have all been confirmed working as expected.
