@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCourseById } from "../../store/slices/coursesSlice";
-import { completeLessonAsync, fetchMyEnrollments } from "../../store/slices/enrollmentSlice";
-import { getMyEnrollments } from "../../services/enrollment.api";
+import { useParams } from "react-router-dom";
 import { submitAssignment } from "../../services/assignment.api";
+import { getMyEnrollments } from "../../services/enrollment.api";
 import { submitQuiz as submitQuizAPI } from "../../services/quiz.api";
+import { fetchCourseById } from "../../store/slices/coursesSlice";
+import {
+    completeLessonAsync,
+    fetchMyEnrollments,
+} from "../../store/slices/enrollmentSlice";
 
 // Helper function to convert YouTube URLs to embed format
 const convertToEmbedUrl = (url) => {
@@ -34,7 +37,10 @@ const convertToEmbedUrl = (url) => {
 
     // Handle YouTube URLs with /v/ format
     if (url.includes("youtube.com/v/")) {
-        const videoId = url.split("youtube.com/v/")[1]?.split("?")[0]?.split("&")[0];
+        const videoId = url
+            .split("youtube.com/v/")[1]
+            ?.split("?")[0]
+            ?.split("&")[0];
         if (videoId) {
             return `https://www.youtube.com/embed/${videoId}`;
         }
@@ -81,7 +87,7 @@ export default function CoursePlayer() {
                 completeLessonAsync({
                     enrollmentId: enrollment._id,
                     lessonId: currentLesson._id,
-                })
+                }),
             ).unwrap();
 
             if (result) setEnrollment(result);
@@ -120,7 +126,9 @@ export default function CoursePlayer() {
                 <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                     <div className="card bg-base-100 shadow">
                         <div className="card-body p-3 sm:p-6">
-                            <h2 className="card-title text-lg sm:text-xl md:text-2xl break-words">{currentCourse.title}</h2>
+                            <h2 className="card-title text-lg sm:text-xl md:text-2xl wrap-break-word">
+                                {currentCourse.title}
+                            </h2>
                             <div className="flex justify-between items-center mt-2">
                                 <p className="text-xs sm:text-sm">Progress</p>
                                 <p className="text-xs sm:text-sm font-bold text-primary">
@@ -138,10 +146,15 @@ export default function CoursePlayer() {
                     {lesson?.videoUrl && (
                         <div className="card bg-base-100 shadow">
                             <div className="card-body p-3 sm:p-6">
-                                <h3 className="card-title text-base sm:text-lg md:text-xl break-words">{lesson.title}</h3>
+                                <h3 className="card-title text-base sm:text-lg md:text-xl wrap-break-word">
+                                    {lesson.title}
+                                </h3>
                                 <div className="bg-base-300 rounded overflow-hidden mt-2 sm:mt-4">
                                     <iframe
-                                        style={{ height: '700px', width: '300px' }}
+                                        style={{
+                                            height: "700px",
+                                            width: "300px",
+                                        }}
                                         src={convertToEmbedUrl(lesson.videoUrl)}
                                         title={lesson.title}
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -152,10 +165,18 @@ export default function CoursePlayer() {
 
                                 <button
                                     onClick={handleMarkComplete}
-                                    disabled={!!enrollment?.progress?.completedLessons?.includes(lesson)}
+                                    disabled={
+                                        !!enrollment?.progress?.completedLessons?.includes(
+                                            lesson,
+                                        )
+                                    }
                                     className={`btn btn-sm sm:btn-md ${enrollment?.progress?.completedLessons?.includes(lesson) ? "btn-disabled" : "btn-success"} mt-3 sm:mt-4 w-full sm:w-auto`}
                                 >
-                                    {enrollment?.progress?.completedLessons?.includes(lesson) ? "Completed ✓" : "✓ Mark as Complete"}
+                                    {enrollment?.progress?.completedLessons?.includes(
+                                        lesson,
+                                    )
+                                        ? "Completed ✓"
+                                        : "✓ Mark as Complete"}
                                 </button>
                             </div>
                         </div>
@@ -170,7 +191,10 @@ export default function CoursePlayer() {
                                 </h3>
                                 {lesson.liveClassDate && (
                                     <p className="text-sm mb-2">
-                                        <strong>Scheduled:</strong> {new Date(lesson.liveClassDate).toLocaleString()}
+                                        <strong>Scheduled:</strong>{" "}
+                                        {new Date(
+                                            lesson.liveClassDate,
+                                        ).toLocaleString()}
                                     </p>
                                 )}
                                 <div className="card-actions justify-end mt-3">
@@ -210,7 +234,9 @@ export default function CoursePlayer() {
 
                 <div className="card bg-base-100 shadow h-fit lg:sticky lg:top-20 order-first lg:order-last">
                     <div className="card-body p-3 sm:p-6">
-                        <h3 className="card-title text-base sm:text-lg mb-2 sm:mb-4">Modules & Lessons</h3>
+                        <h3 className="card-title text-base sm:text-lg mb-2 sm:mb-4">
+                            Modules & Lessons
+                        </h3>
 
                         <div className="space-y-2 sm:space-y-3 max-h-[40vh] sm:max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
                             {currentCourse.syllabus?.map((mod, modIdx) => (
@@ -220,10 +246,11 @@ export default function CoursePlayer() {
                                             setSelectedModule(modIdx);
                                             setSelectedLesson(0);
                                         }}
-                                        className={`w-full text-left font-semibold p-2 rounded transition ${selectedModule === modIdx
-                                            ? "bg-primary text-primary-content"
-                                            : "bg-base-200 hover:bg-base-300"
-                                            }`}
+                                        className={`w-full text-left font-semibold p-2 rounded transition ${
+                                            selectedModule === modIdx
+                                                ? "bg-primary text-primary-content"
+                                                : "bg-base-200 hover:bg-base-300"
+                                        }`}
                                     >
                                         📚 {mod.title}
                                     </button>
@@ -231,37 +258,86 @@ export default function CoursePlayer() {
                                     {selectedModule === modIdx && (
                                         <div className="space-y-1 pl-4">
                                             {mod.lessons?.map((les, lesIdx) => {
-                                                const hasAssignment = !!les.assignmentPrompt;
-                                                const hasQuiz = les.quiz && les.quiz.length > 0;
-                                                const hasLiveClass = !!les.liveClassLink;
-                                                const isCompleted = enrollment?.progress?.completedLessons?.includes(les._id);
-                                                
+                                                const hasAssignment =
+                                                    !!les.assignmentPrompt;
+                                                const hasQuiz =
+                                                    les.quiz &&
+                                                    les.quiz.length > 0;
+                                                const hasLiveClass =
+                                                    !!les.liveClassLink;
+                                                const isCompleted =
+                                                    enrollment?.progress?.completedLessons?.includes(
+                                                        les._id,
+                                                    );
+
                                                 // Check if live class is upcoming
-                                                const isUpcoming = hasLiveClass && les.liveClassDate && new Date(les.liveClassDate) > new Date();
-                                                const liveClassDate = hasLiveClass && les.liveClassDate ? new Date(les.liveClassDate) : null;
+                                                const isUpcoming =
+                                                    hasLiveClass &&
+                                                    les.liveClassDate &&
+                                                    new Date(
+                                                        les.liveClassDate,
+                                                    ) > new Date();
+                                                const liveClassDate =
+                                                    hasLiveClass &&
+                                                    les.liveClassDate
+                                                        ? new Date(
+                                                              les.liveClassDate,
+                                                          )
+                                                        : null;
 
                                                 return (
                                                     <button
                                                         key={lesIdx}
-                                                        onClick={() => setSelectedLesson(lesIdx)}
-                                                        className={`w-full text-left text-sm p-2 rounded transition flex items-center justify-between gap-2 ${selectedLesson === lesIdx
-                                                            ? "bg-secondary text-secondary-content"
-                                                            : "hover:bg-base-200"
-                                                            }`}
+                                                        onClick={() =>
+                                                            setSelectedLesson(
+                                                                lesIdx,
+                                                            )
+                                                        }
+                                                        className={`w-full text-left text-sm p-2 rounded transition flex items-center justify-between gap-2 ${
+                                                            selectedLesson ===
+                                                            lesIdx
+                                                                ? "bg-secondary text-secondary-content"
+                                                                : "hover:bg-base-200"
+                                                        }`}
                                                     >
                                                         <span className="flex items-center gap-1 flex-1 min-w-0">
-                                                            {isCompleted && <span className="text-success">✓</span>}
-                                                            <span className="truncate">{les.title}</span>
+                                                            {isCompleted && (
+                                                                <span className="text-success">
+                                                                    ✓
+                                                                </span>
+                                                            )}
+                                                            <span className="truncate">
+                                                                {les.title}
+                                                            </span>
                                                         </span>
-                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <div className="flex items-center gap-1 shrink-0">
                                                             {hasLiveClass && (
-                                                                <span className="badge badge-xs badge-info" title={isUpcoming ? `Upcoming Live: ${liveClassDate.toLocaleDateString()}` : "Live Class"}>🔴</span>
+                                                                <span
+                                                                    className="badge badge-xs badge-info"
+                                                                    title={
+                                                                        isUpcoming
+                                                                            ? `Upcoming Live: ${liveClassDate.toLocaleDateString()}`
+                                                                            : "Live Class"
+                                                                    }
+                                                                >
+                                                                    🔴
+                                                                </span>
                                                             )}
                                                             {hasAssignment && (
-                                                                <span className="badge badge-xs badge-secondary" title="Has Assignment">📝</span>
+                                                                <span
+                                                                    className="badge badge-xs badge-secondary"
+                                                                    title="Has Assignment"
+                                                                >
+                                                                    📝
+                                                                </span>
                                                             )}
                                                             {hasQuiz && (
-                                                                <span className="badge badge-xs badge-primary" title="Has Quiz">❓</span>
+                                                                <span
+                                                                    className="badge badge-xs badge-primary"
+                                                                    title="Has Quiz"
+                                                                >
+                                                                    ❓
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </button>
@@ -279,7 +355,13 @@ export default function CoursePlayer() {
     );
 }
 
-function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComplete }) {
+function AssignmentSubmission({
+    courseId,
+    lessonId,
+    prompt,
+    enrollment,
+    onComplete,
+}) {
     const dispatch = useDispatch();
     const [answer, setAnswer] = useState("");
     const [submitted, setSubmitted] = useState(false);
@@ -292,11 +374,12 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
     useEffect(() => {
         const checkPreviousSubmission = async () => {
             try {
-                const { getMyAssignments } = await import("../../services/assignment.api");
+                const { getMyAssignments } =
+                    await import("../../services/assignment.api");
                 const response = await getMyAssignments(courseId);
                 const submissions = response.data || [];
                 const previous = submissions.find(
-                    (sub) => String(sub.lessonId) === String(lessonId)
+                    (sub) => String(sub.lessonId) === String(lessonId),
                 );
                 if (previous) {
                     setPreviousSubmission(previous);
@@ -318,24 +401,27 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
 
         try {
             // Detect if answer is a link
-            const isLink = answer.trim().startsWith("http://") || answer.trim().startsWith("https://");
+            const isLink =
+                answer.trim().startsWith("http://") ||
+                answer.trim().startsWith("https://");
             const answerType = isLink ? "link" : "text";
-            
+
             await submitAssignment({
                 courseId,
                 lessonId,
                 answer: answer.trim(),
-                answerType
+                answerType,
             });
             setSubmitted(true);
 
             // Fetch the updated submission
             try {
-                const { getMyAssignments } = await import("../../services/assignment.api");
+                const { getMyAssignments } =
+                    await import("../../services/assignment.api");
                 const response = await getMyAssignments(courseId);
                 const submissions = response.data || [];
                 const updated = submissions.find(
-                    (sub) => String(sub.lessonId) === String(lessonId)
+                    (sub) => String(sub.lessonId) === String(lessonId),
                 );
                 if (updated) {
                     setPreviousSubmission(updated);
@@ -359,7 +445,10 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
             setAnswer("");
         } catch (err) {
             console.error("Failed to submit:", err);
-            setError(err.response?.data?.message || "Failed to submit assignment. Please try again.");
+            setError(
+                err.response?.data?.message ||
+                    "Failed to submit assignment. Please try again.",
+            );
         } finally {
             setLoading(false);
         }
@@ -369,7 +458,9 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
         return (
             <div className="card bg-base-100 shadow">
                 <div className="card-body p-3 sm:p-6">
-                    <h3 className="card-title text-base sm:text-lg">Assignment</h3>
+                    <h3 className="card-title text-base sm:text-lg">
+                        Assignment
+                    </h3>
                     <div className="flex justify-center py-4 sm:py-8">
                         <span className="loading loading-spinner"></span>
                     </div>
@@ -383,9 +474,15 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
             case "reviewed":
                 return <span className="badge badge-success">Reviewed</span>;
             case "pending":
-                return <span className="badge badge-warning">Pending Review</span>;
+                return (
+                    <span className="badge badge-warning">Pending Review</span>
+                );
             default:
-                return <span className="badge badge-ghost">{status || "Pending"}</span>;
+                return (
+                    <span className="badge badge-ghost">
+                        {status || "Pending"}
+                    </span>
+                );
         }
     };
 
@@ -405,13 +502,19 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
                 {previousSubmission && (
                     <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-base-200 rounded-lg border border-base-300">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-                            <h4 className="font-semibold text-sm sm:text-base">My Submission</h4>
-                            <div className="flex-shrink-0">{getStatusBadge(previousSubmission.status)}</div>
+                            <h4 className="font-semibold text-sm sm:text-base">
+                                My Submission
+                            </h4>
+                            <div className="shrink-0">
+                                {getStatusBadge(previousSubmission.status)}
+                            </div>
                         </div>
 
                         <div className="space-y-2 sm:space-y-3">
                             <div>
-                                <label className="text-xs font-medium text-gray-500 uppercase">Your Answer:</label>
+                                <label className="text-xs font-medium text-gray-500 uppercase">
+                                    Your Answer:
+                                </label>
                                 {previousSubmission.answerType === "link" ? (
                                     <div className="mt-1">
                                         <a
@@ -430,18 +533,23 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
                                 )}
                             </div>
 
-                            {previousSubmission.grade !== null && previousSubmission.grade !== undefined && (
-                                <div>
-                                    <label className="text-xs font-medium text-gray-500 uppercase">Grade:</label>
-                                    <p className="text-xl sm:text-2xl font-bold text-primary mt-1">
-                                        {previousSubmission.grade}%
-                                    </p>
-                                </div>
-                            )}
+                            {previousSubmission.grade !== null &&
+                                previousSubmission.grade !== undefined && (
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-500 uppercase">
+                                            Grade:
+                                        </label>
+                                        <p className="text-xl sm:text-2xl font-bold text-primary mt-1">
+                                            {previousSubmission.grade}%
+                                        </p>
+                                    </div>
+                                )}
 
                             {previousSubmission.reviewNotes && (
                                 <div>
-                                    <label className="text-xs font-medium text-gray-500 uppercase">Feedback:</label>
+                                    <label className="text-xs font-medium text-gray-500 uppercase">
+                                        Feedback:
+                                    </label>
                                     <p className="mt-1 text-xs sm:text-sm bg-base-300 p-2 sm:p-3 rounded whitespace-pre-wrap">
                                         {previousSubmission.reviewNotes}
                                     </p>
@@ -450,15 +558,21 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
 
                             {previousSubmission.reviewer && (
                                 <div>
-                                    <label className="text-xs font-medium text-gray-500 uppercase">Reviewed by:</label>
+                                    <label className="text-xs font-medium text-gray-500 uppercase">
+                                        Reviewed by:
+                                    </label>
                                     <p className="text-xs sm:text-sm font-medium mt-1">
-                                        {previousSubmission.reviewer?.name || "Admin"}
+                                        {previousSubmission.reviewer?.name ||
+                                            "Admin"}
                                     </p>
                                 </div>
                             )}
 
                             <div className="text-xs text-gray-400 pt-2 border-t border-base-300">
-                                Submitted: {new Date(previousSubmission.createdAt).toLocaleString()}
+                                Submitted:{" "}
+                                {new Date(
+                                    previousSubmission.createdAt,
+                                ).toLocaleString()}
                             </div>
                         </div>
                     </div>
@@ -466,7 +580,10 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
 
                 {/* Show form only if not submitted */}
                 {!previousSubmission && (
-                    <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-2 sm:space-y-3 mt-3 sm:mt-4"
+                    >
                         <textarea
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}
@@ -484,7 +601,9 @@ function AssignmentSubmission({ courseId, lessonId, prompt, enrollment, onComple
                             {loading ? (
                                 <>
                                     <span className="loading loading-spinner loading-sm"></span>
-                                    <span className="hidden sm:inline">Submitting...</span>
+                                    <span className="hidden sm:inline">
+                                        Submitting...
+                                    </span>
                                 </>
                             ) : (
                                 "Submit Assignment"
@@ -517,20 +636,25 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
     useEffect(() => {
         const checkPreviousSubmission = async () => {
             try {
-                const { getMyQuizSubmissions } = await import("../../services/quiz.api");
+                const { getMyQuizSubmissions } =
+                    await import("../../services/quiz.api");
                 const response = await getMyQuizSubmissions(courseId);
                 const submissions = response.data || [];
 
                 // Find submission for this specific lesson (get the most recent one)
                 const lessonSubmissions = submissions.filter(
-                    (sub) => String(sub.lessonId) === String(lessonId)
+                    (sub) => String(sub.lessonId) === String(lessonId),
                 );
 
                 if (lessonSubmissions.length > 0) {
                     // Get the most recent submission
                     const previous = lessonSubmissions.sort((a, b) => {
-                        const dateA = new Date(a.createdAt || a.submittedAt || 0);
-                        const dateB = new Date(b.createdAt || b.submittedAt || 0);
+                        const dateA = new Date(
+                            a.createdAt || a.submittedAt || 0,
+                        );
+                        const dateB = new Date(
+                            b.createdAt || b.submittedAt || 0,
+                        );
                         return dateB - dateA;
                     })[0];
 
@@ -542,7 +666,11 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                     if (previous.answers && Array.isArray(previous.answers)) {
                         const answersObj = {};
                         previous.answers.forEach((answer, idx) => {
-                            if (answer !== undefined && answer !== null && answer >= 0) {
+                            if (
+                                answer !== undefined &&
+                                answer !== null &&
+                                answer >= 0
+                            ) {
                                 answersObj[idx] = answer;
                             }
                         });
@@ -572,7 +700,7 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
         // Just show a warning if they've already submitted
         if (submitted && previousSubmission) {
             const confirmRetake = window.confirm(
-                "You have already submitted this quiz. Do you want to submit again? Your new score will replace the previous one."
+                "You have already submitted this quiz. Do you want to submit again? Your new score will replace the previous one.",
             );
             if (!confirmRetake) {
                 return;
@@ -598,7 +726,7 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
             const response = await submitQuizAPI({
                 courseId,
                 lessonId,
-                answers: answersArray
+                answers: answersArray,
             });
             const result = response.data;
 
@@ -624,24 +752,32 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                     dispatch(fetchMyEnrollments());
 
                     // Show success message
-                    console.log(`Quiz submitted successfully! Score: ${result.percent}% (${result.score}/${result.total})`);
+                    console.log(
+                        `Quiz submitted successfully! Score: ${result.percent}% (${result.score}/${result.total})`,
+                    );
                 } catch (err) {
                     console.error("Failed to mark lesson complete:", err);
                 }
             }
         } catch (err) {
             console.error("Failed to submit quiz:", err);
-            const errorMsg = err.response?.data?.message || "Failed to submit quiz. Please try again.";
+            const errorMsg =
+                err.response?.data?.message ||
+                "Failed to submit quiz. Please try again.";
             setError(errorMsg);
 
             // If error suggests duplicate, check for previous submission
-            if (errorMsg.includes("already") || errorMsg.includes("duplicate")) {
-                const { getMyQuizSubmissions } = await import("../../services/quiz.api");
+            if (
+                errorMsg.includes("already") ||
+                errorMsg.includes("duplicate")
+            ) {
+                const { getMyQuizSubmissions } =
+                    await import("../../services/quiz.api");
                 try {
                     const response = await getMyQuizSubmissions(courseId);
                     const submissions = response.data || [];
                     const previous = submissions.find(
-                        (sub) => String(sub.lessonId) === String(lessonId)
+                        (sub) => String(sub.lessonId) === String(lessonId),
                     );
                     if (previous) {
                         setPreviousSubmission(previous);
@@ -649,7 +785,10 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                         setScore(previous.percent);
                     }
                 } catch (checkErr) {
-                    console.error("Failed to check previous submission:", checkErr);
+                    console.error(
+                        "Failed to check previous submission:",
+                        checkErr,
+                    );
                 }
             }
         } finally {
@@ -676,25 +815,38 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <h3 className="card-title text-base sm:text-lg">Quiz</h3>
                     {previousSubmission && (
-                        <span className="badge badge-success badge-sm sm:badge-md">Previously Submitted</span>
+                        <span className="badge badge-success badge-sm sm:badge-md">
+                            Previously Submitted
+                        </span>
                     )}
                 </div>
 
                 {previousSubmission && !submitted && (
                     <div className="alert alert-info mt-3 sm:mt-4">
                         <div>
-                            <h4 className="font-bold text-sm sm:text-base">Previous Quiz Results</h4>
+                            <h4 className="font-bold text-sm sm:text-base">
+                                Previous Quiz Results
+                            </h4>
                             <p className="text-base sm:text-lg mt-2">
-                                You scored: <span className="font-bold text-primary">{previousSubmission.percent}%</span>
+                                You scored:{" "}
+                                <span className="font-bold text-primary">
+                                    {previousSubmission.percent}%
+                                </span>
                             </p>
                             <p className="text-xs sm:text-sm mt-1 text-base-content/70">
-                                {previousSubmission.score} out of {previousSubmission.total} questions correct
+                                {previousSubmission.score} out of{" "}
+                                {previousSubmission.total} questions correct
                             </p>
                             <p className="text-xs mt-1 text-base-content/60">
-                                Submitted: {new Date(previousSubmission.createdAt || previousSubmission.submittedAt).toLocaleString()}
+                                Submitted:{" "}
+                                {new Date(
+                                    previousSubmission.createdAt ||
+                                        previousSubmission.submittedAt,
+                                ).toLocaleString()}
                             </p>
                             <p className="text-xs mt-2 text-base-content/60">
-                                💡 You can change your answers below and click "Retake Quiz" to submit a new attempt
+                                💡 You can change your answers below and click
+                                "Retake Quiz" to submit a new attempt
                             </p>
                         </div>
                     </div>
@@ -710,20 +862,29 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                         return (
                             <div
                                 key={qIdx}
-                                className={`border p-3 sm:p-4 rounded ${showResults && isCorrect ? 'border-success bg-success/10' :
-                                    showResults && !isCorrect ? 'border-error bg-error/10' :
-                                        showReview && isCorrect ? 'border-success bg-success/10' :
-                                            showReview && !isCorrect ? 'border-error bg-error/10' :
-                                                'border-base-300'
-                                    }`}
+                                className={`border p-3 sm:p-4 rounded ${
+                                    showResults && isCorrect
+                                        ? "border-success bg-success/10"
+                                        : showResults && !isCorrect
+                                          ? "border-error bg-error/10"
+                                          : showReview && isCorrect
+                                            ? "border-success bg-success/10"
+                                            : showReview && !isCorrect
+                                              ? "border-error bg-error/10"
+                                              : "border-base-300"
+                                }`}
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2 sm:mb-3">
                                     <p className="font-semibold flex-1 text-sm sm:text-base">
                                         {qIdx + 1}. {question.question}
                                     </p>
                                     {showResults && (
-                                        <span className={`badge badge-sm sm:badge-md ${isCorrect ? 'badge-success' : 'badge-error'}`}>
-                                            {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                                        <span
+                                            className={`badge badge-sm sm:badge-md ${isCorrect ? "badge-success" : "badge-error"}`}
+                                        >
+                                            {isCorrect
+                                                ? "✓ Correct"
+                                                : "✗ Incorrect"}
                                         </span>
                                     )}
                                 </div>
@@ -732,7 +893,8 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                                     <div className="mb-2 sm:mb-3 p-2 rounded bg-base-200">
                                         {isCorrect ? (
                                             <p className="text-xs sm:text-sm text-success font-semibold">
-                                                ✓ Correct! Your answer: {question.options[userAnswer]}
+                                                ✓ Correct! Your answer:{" "}
+                                                {question.options[userAnswer]}
                                             </p>
                                         ) : (
                                             <div className="space-y-1">
@@ -740,10 +902,25 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                                                     ✗ Incorrect
                                                 </p>
                                                 <p className="text-xs text-base-content/70">
-                                                    Your answer: <span className="text-error">{question.options[userAnswer]}</span>
+                                                    Your answer:{" "}
+                                                    <span className="text-error">
+                                                        {
+                                                            question.options[
+                                                                userAnswer
+                                                            ]
+                                                        }
+                                                    </span>
                                                 </p>
                                                 <p className="text-xs text-base-content/70">
-                                                    Correct answer: <span className="text-success font-semibold">{question.options[question.correctIndex]}</span>
+                                                    Correct answer:{" "}
+                                                    <span className="text-success font-semibold">
+                                                        {
+                                                            question.options[
+                                                                question
+                                                                    .correctIndex
+                                                            ]
+                                                        }
+                                                    </span>
                                                 </p>
                                             </div>
                                         )}
@@ -752,19 +929,39 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
 
                                 {showReview && !loading && (
                                     <p className="text-xs mb-2 text-base-content/70">
-                                        💡 Correct answer: <span className="font-semibold">{question.options[question.correctIndex]}</span>
+                                        💡 Correct answer:{" "}
+                                        <span className="font-semibold">
+                                            {
+                                                question.options[
+                                                    question.correctIndex
+                                                ]
+                                            }
+                                        </span>
                                     </p>
                                 )}
                                 <div className="space-y-2">
                                     {question.options?.map((option, oIdx) => (
                                         <label
                                             key={oIdx}
-                                            className={`cursor-pointer flex gap-2 sm:gap-3 p-2 rounded transition ${showResults && oIdx === question.correctIndex ? 'bg-success/20' :
-                                                showResults && oIdx === userAnswer && !isCorrect ? 'bg-error/20' :
-                                                    showReview && oIdx === question.correctIndex ? 'bg-success/20' :
-                                                        showReview && oIdx === userAnswer && !isCorrect ? 'bg-error/20' :
-                                                            'hover:bg-base-200'
-                                                }`}
+                                            className={`cursor-pointer flex gap-2 sm:gap-3 p-2 rounded transition ${
+                                                showResults &&
+                                                oIdx === question.correctIndex
+                                                    ? "bg-success/20"
+                                                    : showResults &&
+                                                        oIdx === userAnswer &&
+                                                        !isCorrect
+                                                      ? "bg-error/20"
+                                                      : showReview &&
+                                                          oIdx ===
+                                                              question.correctIndex
+                                                        ? "bg-success/20"
+                                                        : showReview &&
+                                                            oIdx ===
+                                                                userAnswer &&
+                                                            !isCorrect
+                                                          ? "bg-error/20"
+                                                          : "hover:bg-base-200"
+                                            }`}
                                         >
                                             <input
                                                 type="radio"
@@ -772,25 +969,50 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                                                 checked={answers[qIdx] === oIdx}
                                                 onChange={() => {
                                                     if (!loading) {
-                                                        handleAnswer(qIdx, oIdx);
+                                                        handleAnswer(
+                                                            qIdx,
+                                                            oIdx,
+                                                        );
                                                     }
                                                 }}
-                                                disabled={loading || showResults}
-                                                className="radio radio-sm flex-shrink-0"
+                                                disabled={
+                                                    loading || showResults
+                                                }
+                                                className="radio radio-sm shrink-0"
                                             />
-                                            <span className="text-xs sm:text-sm flex-1">{option}</span>
-                                            {showResults && oIdx === question.correctIndex && (
-                                                <span className="text-success font-semibold">✓ Correct Answer</span>
-                                            )}
-                                            {showResults && oIdx === userAnswer && !isCorrect && (
-                                                <span className="text-error font-semibold">✗ Your Answer</span>
-                                            )}
-                                            {showReview && !loading && oIdx === question.correctIndex && (
-                                                <span className="text-success">✓ Correct</span>
-                                            )}
-                                            {showReview && !loading && oIdx === userAnswer && !isCorrect && (
-                                                <span className="text-error">✗ Your Answer</span>
-                                            )}
+                                            <span className="text-xs sm:text-sm flex-1">
+                                                {option}
+                                            </span>
+                                            {showResults &&
+                                                oIdx ===
+                                                    question.correctIndex && (
+                                                    <span className="text-success font-semibold">
+                                                        ✓ Correct Answer
+                                                    </span>
+                                                )}
+                                            {showResults &&
+                                                oIdx === userAnswer &&
+                                                !isCorrect && (
+                                                    <span className="text-error font-semibold">
+                                                        ✗ Your Answer
+                                                    </span>
+                                                )}
+                                            {showReview &&
+                                                !loading &&
+                                                oIdx ===
+                                                    question.correctIndex && (
+                                                    <span className="text-success">
+                                                        ✓ Correct
+                                                    </span>
+                                                )}
+                                            {showReview &&
+                                                !loading &&
+                                                oIdx === userAnswer &&
+                                                !isCorrect && (
+                                                    <span className="text-error">
+                                                        ✗ Your Answer
+                                                    </span>
+                                                )}
                                         </label>
                                     ))}
                                 </div>
@@ -807,13 +1029,17 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
 
                 <button
                     onClick={handleSubmit}
-                    disabled={loading || Object.keys(answers).length !== quiz.length}
+                    disabled={
+                        loading || Object.keys(answers).length !== quiz.length
+                    }
                     className="btn btn-primary btn-sm sm:btn-md mt-4 sm:mt-6 w-full"
                 >
                     {loading ? (
                         <>
                             <span className="loading loading-spinner loading-sm"></span>
-                            <span className="hidden sm:inline">Submitting...</span>
+                            <span className="hidden sm:inline">
+                                Submitting...
+                            </span>
                         </>
                     ) : previousSubmission ? (
                         "Retake Quiz"
@@ -825,18 +1051,31 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                 {/* Show quiz results immediately after submission */}
                 {submitted && previousSubmission && (
                     <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                        <div className={`alert ${score >= 70 ? 'alert-success' : score >= 50 ? 'alert-warning' : 'alert-error'} shadow-lg`}>
+                        <div
+                            className={`alert ${score >= 70 ? "alert-success" : score >= 50 ? "alert-warning" : "alert-error"} shadow-lg`}
+                        >
                             <div className="w-full">
-                                <h4 className="font-bold text-lg sm:text-xl mb-2 sm:mb-3">📊 Quiz Results</h4>
+                                <h4 className="font-bold text-lg sm:text-xl mb-2 sm:mb-3">
+                                    📊 Quiz Results
+                                </h4>
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
                                     <div className="text-center">
-                                        <p className="text-3xl sm:text-4xl font-bold">{score}%</p>
-                                        <p className="text-xs opacity-70">Score</p>
+                                        <p className="text-3xl sm:text-4xl font-bold">
+                                            {score}%
+                                        </p>
+                                        <p className="text-xs opacity-70">
+                                            Score
+                                        </p>
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs sm:text-sm">Correct Answers</span>
-                                            <span className="font-bold text-sm sm:text-base">{previousSubmission.score} / {previousSubmission.total}</span>
+                                            <span className="text-xs sm:text-sm">
+                                                Correct Answers
+                                            </span>
+                                            <span className="font-bold text-sm sm:text-base">
+                                                {previousSubmission.score} /{" "}
+                                                {previousSubmission.total}
+                                            </span>
                                         </div>
                                         <progress
                                             className="progress progress-primary w-full"
@@ -846,12 +1085,15 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                                     </div>
                                 </div>
                                 <p className="text-xs sm:text-sm mt-2">
-                                    {score >= 70 ? "🎉 Excellent work! You've mastered this lesson!" :
-                                        score >= 50 ? "👍 Good effort! Keep practicing to improve!" :
-                                            "📚 Keep studying! Review the material and try again."}
+                                    {score >= 70
+                                        ? "🎉 Excellent work! You've mastered this lesson!"
+                                        : score >= 50
+                                          ? "👍 Good effort! Keep practicing to improve!"
+                                          : "📚 Keep studying! Review the material and try again."}
                                 </p>
                                 <p className="text-xs mt-2 opacity-70">
-                                    ✅ Your quiz has been saved. View detailed marks in the Student Dashboard.
+                                    ✅ Your quiz has been saved. View detailed
+                                    marks in the Student Dashboard.
                                 </p>
                             </div>
                         </div>
@@ -859,32 +1101,60 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                         {/* Show correct/incorrect answers breakdown */}
                         <div className="card bg-base-200">
                             <div className="card-body p-3 sm:p-4">
-                                <h5 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">Answer Review</h5>
+                                <h5 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
+                                    Answer Review
+                                </h5>
                                 <div className="space-y-2">
                                     {quiz.map((question, qIdx) => {
                                         const userAnswer = answers[qIdx];
-                                        const isCorrect = userAnswer === question.correctIndex;
+                                        const isCorrect =
+                                            userAnswer ===
+                                            question.correctIndex;
                                         return (
                                             <div
                                                 key={qIdx}
-                                                className={`p-2 sm:p-3 rounded ${isCorrect ? 'bg-success/20' : 'bg-error/20'}`}
+                                                className={`p-2 sm:p-3 rounded ${isCorrect ? "bg-success/20" : "bg-error/20"}`}
                                             >
                                                 <div className="flex items-start gap-2">
-                                                    <span className={`text-sm sm:text-base ${isCorrect ? 'text-success' : 'text-error'}`}>
-                                                        {isCorrect ? '✓' : '✗'}
+                                                    <span
+                                                        className={`text-sm sm:text-base ${isCorrect ? "text-success" : "text-error"}`}
+                                                    >
+                                                        {isCorrect ? "✓" : "✗"}
                                                     </span>
                                                     <div className="flex-1">
                                                         <p className="text-xs font-semibold">
-                                                            Question {qIdx + 1}: {question.question}
+                                                            Question {qIdx + 1}:{" "}
+                                                            {question.question}
                                                         </p>
                                                         <p className="text-xs mt-1">
-                                                            Your answer: <span className={isCorrect ? 'text-success font-semibold' : 'text-error'}>
-                                                                {question.options[userAnswer]}
+                                                            Your answer:{" "}
+                                                            <span
+                                                                className={
+                                                                    isCorrect
+                                                                        ? "text-success font-semibold"
+                                                                        : "text-error"
+                                                                }
+                                                            >
+                                                                {
+                                                                    question
+                                                                        .options[
+                                                                        userAnswer
+                                                                    ]
+                                                                }
                                                             </span>
                                                         </p>
                                                         {!isCorrect && (
                                                             <p className="text-xs mt-1 text-success">
-                                                                Correct answer: <span className="font-semibold">{question.options[question.correctIndex]}</span>
+                                                                Correct answer:{" "}
+                                                                <span className="font-semibold">
+                                                                    {
+                                                                        question
+                                                                            .options[
+                                                                            question
+                                                                                .correctIndex
+                                                                        ]
+                                                                    }
+                                                                </span>
                                                             </p>
                                                         )}
                                                     </div>

@@ -1,13 +1,17 @@
+import { ArrowRight, BookOpen, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import { BookOpen, ArrowRight, Star } from "lucide-react";
 
 export default function CourseCard({ course }) {
-    const totalLessons = course.syllabus?.reduce((acc, mod) => acc + (mod.lessons?.length || 0), 0) || 0;
+    const totalLessons =
+        course.syllabus?.reduce(
+            (acc, mod) => acc + (mod.lessons?.length || 0),
+            0,
+        ) || 0;
 
     return (
         <div className="card bg-base-100/90 backdrop-blur border border-base-300 shadow-lg hover:shadow-2xl hover:border-primary/40 transition-all duration-300 group rounded-3xl overflow-hidden flex flex-col h-full hover:-translate-y-1">
             {/* Visual Top Header Banner */}
-            <div className="h-32 bg-gradient-to-r from-[#78A083]/30 via-[#50727B]/30 to-[#344955]/40 p-4 relative flex flex-col justify-between overflow-hidden">
+            <div className="h-32 bg-linear-to-r from-[#78A083]/30 via-[#50727B]/30 to-[#344955]/40 p-4 relative flex flex-col justify-between overflow-hidden">
                 <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-primary/20 rounded-full blur-xl pointer-events-none"></div>
 
                 <div className="flex justify-between items-start relative z-10">
@@ -38,16 +42,23 @@ export default function CourseCard({ course }) {
 
                     <div className="text-sm text-base-content/70 mt-2 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs">
-                            {course.instructorName ? course.instructorName[0].toUpperCase() : "I"}
+                            {course.instructorName
+                                ? course.instructorName[0].toUpperCase()
+                                : "I"}
                         </div>
-                        <span className="font-semibold text-xs text-base-content/80">By {course.instructorName}</span>
+                        <span className="font-semibold text-xs text-base-content/80">
+                            By {course.instructorName}
+                        </span>
                     </div>
                 </div>
 
                 {course.tags && course.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                         {course.tags.slice(0, 3).map((t, i) => (
-                            <span key={i} className="badge badge-sm badge-ghost text-xs font-medium border-base-300">
+                            <span
+                                key={i}
+                                className="badge badge-sm badge-ghost text-xs font-medium border-base-300"
+                            >
                                 #{t}
                             </span>
                         ))}
@@ -56,8 +67,12 @@ export default function CourseCard({ course }) {
 
                 <div className="pt-4 border-t border-base-300 flex items-center justify-between mt-auto">
                     <div>
-                        <span className="text-xs text-base-content/60 font-medium">Course Fee</span>
-                        <p className="font-black text-xl gradient-text">৳ {course.price?.toLocaleString()}</p>
+                        <span className="text-xs text-base-content/60 font-medium">
+                            Course Fee
+                        </span>
+                        <p className="font-black text-xl gradient-text">
+                            ৳ {course.price?.toLocaleString()}
+                        </p>
                     </div>
                     <Link
                         to={`/courses/${course._id}`}

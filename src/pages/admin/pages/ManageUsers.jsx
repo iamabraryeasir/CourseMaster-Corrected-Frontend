@@ -1,7 +1,19 @@
+import {
+    Ban,
+    MoreVertical,
+    Shield,
+    ShieldOff,
+    Trash2,
+    Unlock,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAllUsers, deleteUser, updateUserRole, toggleBanUser } from "../../../services/admin.api";
 import { useSelector } from "react-redux";
-import { Trash2, Shield, ShieldOff, Ban, Unlock, MoreVertical } from "lucide-react";
+import {
+    deleteUser,
+    getAllUsers,
+    toggleBanUser,
+    updateUserRole,
+} from "../../../services/admin.api";
 
 export default function ManageUsers() {
     const [users, setUsers] = useState([]);
@@ -51,9 +63,9 @@ export default function ManageUsers() {
 
         const handleClickOutside = (event) => {
             const target = event.target;
-            const dropdown = target.closest('.dropdown');
-            const menu = target.closest('.dropdown-content');
-            
+            const dropdown = target.closest(".dropdown");
+            const menu = target.closest(".dropdown-content");
+
             if (!dropdown && !menu) {
                 setShowActions(null);
             }
@@ -61,17 +73,21 @@ export default function ManageUsers() {
 
         // Use a small delay to allow button clicks to register
         const timeoutId = setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
+            document.addEventListener("click", handleClickOutside);
         }, 100);
 
         return () => {
             clearTimeout(timeoutId);
-            document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener("click", handleClickOutside);
         };
     }, [showActions]);
 
     const handleDelete = async (userId, userName) => {
-        if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+        if (
+            !window.confirm(
+                `Are you sure you want to delete user "${userName}"? This action cannot be undone.`,
+            )
+        ) {
             return;
         }
 
@@ -103,7 +119,9 @@ export default function ManageUsers() {
             await fetchUsers();
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to update user role");
+            setError(
+                err.response?.data?.message || "Failed to update user role",
+            );
         } finally {
             setActionLoading(null);
             setShowActions(null);
@@ -123,7 +141,9 @@ export default function ManageUsers() {
             await fetchUsers();
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to update user role");
+            setError(
+                err.response?.data?.message || "Failed to update user role",
+            );
         } finally {
             setActionLoading(null);
             setShowActions(null);
@@ -132,7 +152,11 @@ export default function ManageUsers() {
 
     const handleBan = async (userId, userName, isBanned) => {
         const action = isBanned ? "unban" : "ban";
-        if (!window.confirm(`${action === "ban" ? "Ban" : "Unban"} user "${userName}"?`)) {
+        if (
+            !window.confirm(
+                `${action === "ban" ? "Ban" : "Unban"} user "${userName}"?`,
+            )
+        ) {
             return;
         }
 
@@ -140,7 +164,9 @@ export default function ManageUsers() {
             setActionLoading(userId);
             setError(null);
             await toggleBanUser(userId);
-            setSuccess(`User "${userName}" ${action === "ban" ? "banned" : "unbanned"} successfully`);
+            setSuccess(
+                `User "${userName}" ${action === "ban" ? "banned" : "unbanned"} successfully`,
+            );
             await fetchUsers();
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
@@ -152,7 +178,8 @@ export default function ManageUsers() {
     };
 
     const isCurrentUser = (userId) => {
-        const currentUserId = currentUser?._id || currentUser?.id || user?._id || user?.id;
+        const currentUserId =
+            currentUser?._id || currentUser?.id || user?._id || user?.id;
         return currentUserId === userId;
     };
 
@@ -196,28 +223,41 @@ export default function ManageUsers() {
                                         <th className="font-bold">Role</th>
                                         <th className="font-bold">Status</th>
                                         <th className="font-bold">Joined</th>
-                                        <th className="font-bold text-center">Actions</th>
+                                        <th className="font-bold text-center">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {users.map((userItem) => {
-                                        const isSelf = isCurrentUser(userItem._id);
-                                        const isLoading = actionLoading === userItem._id;
-                                        const showMenu = showActions === userItem._id;
+                                        const isSelf = isCurrentUser(
+                                            userItem._id,
+                                        );
+                                        const isLoading =
+                                            actionLoading === userItem._id;
+                                        const showMenu =
+                                            showActions === userItem._id;
 
                                         return (
                                             <tr
                                                 key={userItem._id}
                                                 className={`hover:bg-base-200/50 transition-colors ${
-                                                    userItem.isBanned ? "opacity-60" : ""
+                                                    userItem.isBanned
+                                                        ? "opacity-60"
+                                                        : ""
                                                 }`}
                                             >
-                                                <td className="font-semibold">{userItem.name}</td>
-                                                <td className="text-base-content/80">{userItem.email}</td>
+                                                <td className="font-semibold">
+                                                    {userItem.name}
+                                                </td>
+                                                <td className="text-base-content/80">
+                                                    {userItem.email}
+                                                </td>
                                                 <td>
                                                     <span
                                                         className={`badge badge-lg font-semibold ${
-                                                            userItem.role === "admin"
+                                                            userItem.role ===
+                                                            "admin"
                                                                 ? "badge-error"
                                                                 : "badge-primary"
                                                         }`}
@@ -238,20 +278,34 @@ export default function ManageUsers() {
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td>{new Date(userItem.createdAt).toLocaleDateString()}</td>
+                                                <td>
+                                                    {new Date(
+                                                        userItem.createdAt,
+                                                    ).toLocaleDateString()}
+                                                </td>
                                                 <td>
                                                     <div className="flex justify-center">
-                                                        <div className={`dropdown dropdown-end ${showMenu ? "dropdown-open" : ""}`}>
+                                                        <div
+                                                            className={`dropdown dropdown-end ${showMenu ? "dropdown-open" : ""}`}
+                                                        >
                                                             <button
                                                                 type="button"
                                                                 tabIndex={0}
                                                                 className="btn btn-sm btn-ghost"
-                                                                onClick={(e) => {
+                                                                onClick={(
+                                                                    e,
+                                                                ) => {
                                                                     e.stopPropagation();
                                                                     e.preventDefault();
-                                                                    setShowActions(showMenu ? null : userItem._id);
+                                                                    setShowActions(
+                                                                        showMenu
+                                                                            ? null
+                                                                            : userItem._id,
+                                                                    );
                                                                 }}
-                                                                disabled={isLoading}
+                                                                disabled={
+                                                                    isLoading
+                                                                }
                                                             >
                                                                 {isLoading ? (
                                                                     <span className="loading loading-spinner loading-xs"></span>
@@ -261,91 +315,160 @@ export default function ManageUsers() {
                                                             </button>
                                                             <ul
                                                                 tabIndex={0}
-                                                                className="dropdown-content menu bg-base-100 rounded-box z-[100] w-52 p-2 shadow-xl border-2 border-base-300"
-                                                                onClick={(e) => {
+                                                                className="dropdown-content menu bg-base-100 rounded-box z-100 w-52 p-2 shadow-xl border-2 border-base-300"
+                                                                onClick={(
+                                                                    e,
+                                                                ) => {
                                                                     e.stopPropagation();
                                                                 }}
                                                             >
-                                                                    {/* Make Admin/Student */}
-                                                                    {userItem.role === "admin" ? (
-                                                                        <li>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleMakeStudent(userItem._id, userItem.name);
-                                                                                }}
-                                                                                disabled={isSelf || isLoading}
-                                                                                className={isSelf ? "opacity-50 cursor-not-allowed" : ""}
-                                                                                title={isSelf ? "Cannot change your own role" : ""}
-                                                                            >
-                                                                                <ShieldOff className="w-4 h-4" />
-                                                                                Make Student
-                                                                            </button>
-                                                                        </li>
-                                                                    ) : (
-                                                                        <li>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleMakeAdmin(userItem._id, userItem.name);
-                                                                                }}
-                                                                                disabled={isSelf || isLoading}
-                                                                                className={isSelf ? "opacity-50 cursor-not-allowed" : ""}
-                                                                                title={isSelf ? "Cannot change your own role" : ""}
-                                                                            >
-                                                                                <Shield className="w-4 h-4" />
-                                                                                Make Admin
-                                                                            </button>
-                                                                        </li>
-                                                                    )}
-
-                                                                    {/* Ban/Unban */}
+                                                                {/* Make Admin/Student */}
+                                                                {userItem.role ===
+                                                                "admin" ? (
                                                                     <li>
                                                                         <button
                                                                             type="button"
-                                                                            onClick={(e) => {
+                                                                            onClick={(
+                                                                                e,
+                                                                            ) => {
                                                                                 e.stopPropagation();
-                                                                                handleBan(userItem._id, userItem.name, userItem.isBanned);
+                                                                                handleMakeStudent(
+                                                                                    userItem._id,
+                                                                                    userItem.name,
+                                                                                );
                                                                             }}
-                                                                            disabled={isSelf || isLoading}
-                                                                            className={isSelf ? "opacity-50 cursor-not-allowed" : ""}
-                                                                            title={isSelf ? "Cannot ban yourself" : ""}
+                                                                            disabled={
+                                                                                isSelf ||
+                                                                                isLoading
+                                                                            }
+                                                                            className={
+                                                                                isSelf
+                                                                                    ? "opacity-50 cursor-not-allowed"
+                                                                                    : ""
+                                                                            }
+                                                                            title={
+                                                                                isSelf
+                                                                                    ? "Cannot change your own role"
+                                                                                    : ""
+                                                                            }
                                                                         >
-                                                                            {userItem.isBanned ? (
-                                                                                <>
-                                                                                    <Unlock className="w-4 h-4" />
-                                                                                    Unban User
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <Ban className="w-4 h-4" />
-                                                                                    Ban User
-                                                                                </>
-                                                                            )}
+                                                                            <ShieldOff className="w-4 h-4" />
+                                                                            Make
+                                                                            Student
                                                                         </button>
                                                                     </li>
-
-                                                                    <div className="divider my-1"></div>
-
-                                                                    {/* Delete */}
+                                                                ) : (
                                                                     <li>
                                                                         <button
                                                                             type="button"
-                                                                            onClick={(e) => {
+                                                                            onClick={(
+                                                                                e,
+                                                                            ) => {
                                                                                 e.stopPropagation();
-                                                                                handleDelete(userItem._id, userItem.name);
+                                                                                handleMakeAdmin(
+                                                                                    userItem._id,
+                                                                                    userItem.name,
+                                                                                );
                                                                             }}
-                                                                            disabled={isSelf || isLoading}
-                                                                            className={`text-error ${isSelf ? "opacity-50 cursor-not-allowed" : ""}`}
-                                                                            title={isSelf ? "Cannot delete yourself" : ""}
+                                                                            disabled={
+                                                                                isSelf ||
+                                                                                isLoading
+                                                                            }
+                                                                            className={
+                                                                                isSelf
+                                                                                    ? "opacity-50 cursor-not-allowed"
+                                                                                    : ""
+                                                                            }
+                                                                            title={
+                                                                                isSelf
+                                                                                    ? "Cannot change your own role"
+                                                                                    : ""
+                                                                            }
                                                                         >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                            Delete User
+                                                                            <Shield className="w-4 h-4" />
+                                                                            Make
+                                                                            Admin
                                                                         </button>
                                                                     </li>
-                                                                </ul>
+                                                                )}
+
+                                                                {/* Ban/Unban */}
+                                                                <li>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.stopPropagation();
+                                                                            handleBan(
+                                                                                userItem._id,
+                                                                                userItem.name,
+                                                                                userItem.isBanned,
+                                                                            );
+                                                                        }}
+                                                                        disabled={
+                                                                            isSelf ||
+                                                                            isLoading
+                                                                        }
+                                                                        className={
+                                                                            isSelf
+                                                                                ? "opacity-50 cursor-not-allowed"
+                                                                                : ""
+                                                                        }
+                                                                        title={
+                                                                            isSelf
+                                                                                ? "Cannot ban yourself"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        {userItem.isBanned ? (
+                                                                            <>
+                                                                                <Unlock className="w-4 h-4" />
+                                                                                Unban
+                                                                                User
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Ban className="w-4 h-4" />
+                                                                                Ban
+                                                                                User
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+                                                                </li>
+
+                                                                <div className="divider my-1"></div>
+
+                                                                {/* Delete */}
+                                                                <li>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.stopPropagation();
+                                                                            handleDelete(
+                                                                                userItem._id,
+                                                                                userItem.name,
+                                                                            );
+                                                                        }}
+                                                                        disabled={
+                                                                            isSelf ||
+                                                                            isLoading
+                                                                        }
+                                                                        className={`text-error ${isSelf ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                                        title={
+                                                                            isSelf
+                                                                                ? "Cannot delete yourself"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                        Delete
+                                                                        User
+                                                                    </button>
+                                                                </li>
+                                                            </ul>
                                                         </div>
                                                     </div>
                                                 </td>
