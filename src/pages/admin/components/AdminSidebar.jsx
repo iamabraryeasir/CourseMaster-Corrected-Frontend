@@ -1,23 +1,31 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
 import {
-    LayoutDashboard,
+    BarChart3,
     BookOpen,
+    ClipboardList,
+    LayoutDashboard,
+    Menu,
     PlusCircle,
     Users,
-    ClipboardList,
-    BarChart3,
     Video,
-    Menu,
     X,
 } from "lucide-react";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 export default function AdminSidebar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const Item = ({ to, label, Icon: IconComp, end = true, onClick, showLabel = true }) => {
+    const Item = ({
+        to,
+        label,
+        Icon: IconComp,
+        end = true,
+        onClick,
+        showLabel = true,
+    }) => {
         const linkClass = ({ isActive }) => {
-            const baseClasses = "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200";
+            const baseClasses =
+                "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200";
             if (isActive) {
                 return `${baseClasses} bg-primary text-primary-content font-semibold shadow-md`;
             }
@@ -25,26 +33,53 @@ export default function AdminSidebar() {
         };
 
         return (
-            <NavLink
-                to={to}
-                end={end}
-                onClick={onClick}
-                className={linkClass}
-            >
+            <NavLink to={to} end={end} onClick={onClick} className={linkClass}>
                 {IconComp && <IconComp className="w-5 h-5 shrink-0" />}
-                {showLabel && <span className="text-sm sm:text-base">{label}</span>}
+                {showLabel && (
+                    <span className="text-sm sm:text-base">{label}</span>
+                )}
             </NavLink>
         );
     };
 
     const menuItems = [
         { to: "/admin", label: "Overview", Icon: LayoutDashboard, end: true },
-        { to: "/admin/courses", label: "Manage Courses", Icon: BookOpen, end: true },
-        { to: "/admin/courses/create", label: "Add Course", Icon: PlusCircle, end: true },
-        { to: "/admin/video-classes", label: "Video Classes", Icon: Video, end: true },
-        { to: "/admin/enrollments", label: "Enrollments", Icon: Users, end: true },
-        { to: "/admin/assignments", label: "Assignments", Icon: ClipboardList, end: true },
-        { to: "/admin/analytics", label: "Analytics", Icon: BarChart3, end: true },
+        {
+            to: "/admin/courses",
+            label: "Manage Courses",
+            Icon: BookOpen,
+            end: true,
+        },
+        {
+            to: "/admin/courses/create",
+            label: "Add Course",
+            Icon: PlusCircle,
+            end: true,
+        },
+        {
+            to: "/admin/video-classes",
+            label: "Video Classes",
+            Icon: Video,
+            end: true,
+        },
+        {
+            to: "/admin/enrollments",
+            label: "Enrollments",
+            Icon: Users,
+            end: true,
+        },
+        {
+            to: "/admin/assignments",
+            label: "Assignments",
+            Icon: ClipboardList,
+            end: true,
+        },
+        {
+            to: "/admin/analytics",
+            label: "Analytics",
+            Icon: BarChart3,
+            end: true,
+        },
         { to: "/admin/users", label: "Manage Users", Icon: Users, end: true },
     ];
 
@@ -56,7 +91,11 @@ export default function AdminSidebar() {
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     className="btn btn-sm btn-ghost text-base-content"
                 >
-                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    {mobileMenuOpen ? (
+                        <X className="w-5 h-5" />
+                    ) : (
+                        <Menu className="w-5 h-5" />
+                    )}
                     <span className="ml-2 font-semibold">Admin Menu</span>
                 </button>
             </div>
@@ -72,7 +111,9 @@ export default function AdminSidebar() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="font-bold text-lg text-base-content">Admin Menu</h2>
+                            <h2 className="font-bold text-lg text-base-content">
+                                Admin Menu
+                            </h2>
                             <button
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="btn btn-sm btn-ghost"

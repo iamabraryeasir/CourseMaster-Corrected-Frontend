@@ -619,36 +619,7 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
-### BUG-017: User Email Invisible in Dark Mode on Manage Users Page
-
-- **Bug ID & Title**: `BUG-017` — Hardcoded dark text color on Manage Users table renders email unreadable in dark mode
-- **Category**: UI/UX / Accessibility
-- **Priority & Severity**: **Low / P4**
-- **Location & Steps to Reproduce**:
-    1. Toggle Dark Mode and navigate to `/admin/users`.
-- **Expected vs. Actual Result**:
-    - _Expected_: High contrast email text matching theme.
-    - _Actual_: Hardcoded `#1e293b` rendered black text on dark background.
-- **Severity & Evidence**:
-    - _Evidence_: `frontend/src/pages/admin/pages/ManageUsers.jsx`:
-      `<td style={{ color: '#1e293b' }}>{userItem.email}</td>`
-- **The Solve (Code Fix)**:
-    - **File**: `frontend/src/pages/admin/pages/ManageUsers.jsx`
-    - **Before (Buggy Code)**:
-        ```jsx
-        <td className="font-semibold">{userItem.name}</td>
-        <td style={{ color: '#1e293b' }}>{userItem.email}</td>
-        ```
-    - **After (Solved Code)**:
-        ```jsx
-        <td className="font-semibold">{userItem.name}</td>
-        <td className="text-base-content/80">{userItem.email}</td>
-        ```
-- **Verification Status**: **Fixed & Verified** — Clear, accessible typography in both light and dark themes.
-
----
-
-### BUG-018: Course Card Title Bleeds Out of Card Boundaries
+### BUG-017: Course Card Title Bleeds Out of Card Boundaries
 
 - **Bug ID & Title**: `BUG-018` — `whitespace-nowrap overflow-visible` on Course Card titles causes layout breakage
 - **Category**: UI/UX / Layout
@@ -681,109 +652,129 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
-### BUG-019: LocalStorage Key Mismatch and Hardcoded Redirect Break Post-Login State
+### BUG-018: LocalStorage Key Mismatch and Hardcoded Redirect Break Post-Login State
+
 - **Bug ID & Title**: `BUG-019` — LocalStorage token key mismatch and hardcoded home redirect prevent successful login persistence
 - **Category**: Authentication & Authorization / Frontend State & Routing
 - **Priority & Severity**: **Critical / P1**
 - **Location & Steps to Reproduce**:
-  1. Navigate to `/login`.
-  2. Enter valid Admin credentials (`admin@coursemaster.com` / `admin123`) or Student credentials (`student@coursemaster.com` / `student123`).
-  3. Click **Sign In**.
+    1. Navigate to `/login`.
+    2. Enter valid Admin credentials (`admin@coursemaster.com` / `admin123`) or Student credentials (`student@coursemaster.com` / `student123`).
+    3. Click **Sign In**.
 - **Expected vs. Actual Result**:
-  - *Expected*: Token is saved to LocalStorage, the user state is recognized by the application, and the user is redirected to their dashboard (`/admin` for Admin, `/student` for Student).
-  - *Actual*: The user is kicked right back to the Home page (`/`) as an unauthenticated guest. The Navbar still shows "Login" / "Enroll Now", and accessing protected routes immediately redirects back to `/login`.
+    - _Expected_: Token is saved to LocalStorage, the user state is recognized by the application, and the user is redirected to their dashboard (`/admin` for Admin, `/student` for Student).
+    - _Actual_: The user is kicked right back to the Home page (`/`) as an unauthenticated guest. The Navbar still shows "Login" / "Enroll Now", and accessing protected routes immediately redirects back to `/login`.
 - **Severity & Evidence**:
-  - *Evidence*: 
-    1. In `frontend/src/utils/auth.js`, `saveToken` was saving to `localStorage.setItem("user_token", token)`, while `getToken` was looking for `localStorage.getItem("token")`. Since `getToken()` evaluated to `null`, all components, Axios auth interceptors, and protected route guards treated the user as logged out.
-    2. In `frontend/src/pages/Login/Login.jsx`, `handleSubmit` hardcoded `navigate("/")` instead of routing users according to their authenticated role.
+    - _Evidence_:
+        1. In `frontend/src/utils/auth.js`, `saveToken` was saving to `localStorage.setItem("user_token", token)`, while `getToken` was looking for `localStorage.getItem("token")`. Since `getToken()` evaluated to `null`, all components, Axios auth interceptors, and protected route guards treated the user as logged out.
+        2. In `frontend/src/pages/Login/Login.jsx`, `handleSubmit` hardcoded `navigate("/")` instead of routing users according to their authenticated role.
 - **The Solve (Code Fix)**:
-  - **File 1**: `frontend/src/utils/auth.js`
-  - **Before (Buggy Code)**:
-    ```javascript
-    export const saveToken = (token) => localStorage.setItem("user_token", token);
-    export const getToken = () => localStorage.getItem("token");
-    export const clearToken = () => localStorage.removeItem("token");
-    ```
-  - **After (Solved Code)**:
-    ```javascript
-    export const saveToken = (token) => {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user_token", token);
-    };
+    - **File 1**: `frontend/src/utils/auth.js`
+    - **Before (Buggy Code)**:
+        ```javascript
+        export const saveToken = (token) =>
+            localStorage.setItem("user_token", token);
+        export const getToken = () => localStorage.getItem("token");
+        export const clearToken = () => localStorage.removeItem("token");
+        ```
+    - **After (Solved Code)**:
 
-    export const getToken = () => {
-        return localStorage.getItem("token") || localStorage.getItem("user_token");
-    };
+        ```javascript
+        export const saveToken = (token) => {
+            localStorage.setItem("token", token);
+            localStorage.setItem("user_token", token);
+        };
 
-    export const clearToken = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user_token");
-    };
-    ```
-  - **File 2**: `frontend/src/pages/Login/Login.jsx`
-  - **Before (Buggy Code)**:
-    ```javascript
-    const res = await loginUser(form);
-    saveToken(res.data.token);
+        export const getToken = () => {
+            return (
+                localStorage.getItem("token") ||
+                localStorage.getItem("user_token")
+            );
+        };
 
-    navigate("/");
-    window.location.reload();
-    ```
-  - **After (Solved Code)**:
-    ```javascript
-    const res = await loginUser(form);
-    saveToken(res.data.token);
+        export const clearToken = () => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user_token");
+        };
+        ```
 
-    const role = res.data?.user?.role;
-    if (role === "admin") {
-        navigate("/admin");
-    } else if (role === "student") {
-        navigate("/student");
-    } else {
+    - **File 2**: `frontend/src/pages/Login/Login.jsx`
+    - **Before (Buggy Code)**:
+
+        ```javascript
+        const res = await loginUser(form);
+        saveToken(res.data.token);
+
         navigate("/");
-    }
-    window.location.reload();
-    ```
+        window.location.reload();
+        ```
+
+    - **After (Solved Code)**:
+
+        ```javascript
+        const res = await loginUser(form);
+        saveToken(res.data.token);
+
+        const role = res.data?.user?.role;
+        if (role === "admin") {
+            navigate("/admin");
+        } else if (role === "student") {
+            navigate("/student");
+        } else {
+            navigate("/");
+        }
+        window.location.reload();
+        ```
+
 - **Verification Status**: **Fixed & Verified** — Both Admin and Student login persist their JWT tokens, populate user profile in Navbar, and route directly to their respective portals.
 
 ---
 
 ---
 
-### BUG-020: Student Dashboard Course Cards Render "NaN%" for Progress
+### BUG-019: Student Dashboard Course Cards Render "NaN%" for Progress
+
 - **Bug ID & Title**: `BUG-020` — Unhandled division by undefined syllabus length causes Course Progress to display "NaN%"
 - **Category**: UI/UX / Data Handling / Frontend
 - **Priority & Severity**: **High / P2**
 - **Location & Steps to Reproduce**:
-  1. Log in as a Student and navigate to `/student` (Student Dashboard).
-  2. Observe the enrolled course cards in the "My Courses" section.
+    1. Log in as a Student and navigate to `/student` (Student Dashboard).
+    2. Observe the enrolled course cards in the "My Courses" section.
 - **Expected vs. Actual Result**:
-  - *Expected*: The course progress displays the student's actual progress percentage (e.g. `0%`, `25%`, `100%`), matching the progress bar.
-  - *Actual*: The progress percentage prominently renders as **`NaN%`** on all course cards.
+    - _Expected_: The course progress displays the student's actual progress percentage (e.g. `0%`, `25%`, `100%`), matching the progress bar.
+    - _Actual_: The progress percentage prominently renders as **`NaN%`** on all course cards.
 - **Severity & Evidence**:
-  - *Evidence*: In `frontend/src/pages/student/StudentDashboard.jsx`:
-    ```jsx
-    {Math.round((enrollment.progress?.completedLessons?.length / (stats?.courseData?.syllabus?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0))) * 100)}%
-    ```
-    When the dashboard loads, detailed course statistics (`stats`) are not yet fetched (they are only loaded on demand when clicking "Details"). Attempting to access `stats?.courseData?.syllabus?.reduce(...)` evaluates to `undefined`. Any number divided by `undefined` produces `NaN`, which renders as `NaN%`.
+    - _Evidence_: In `frontend/src/pages/student/StudentDashboard.jsx`:
+        ```jsx
+        {Math.round((enrollment.progress?.completedLessons?.length / (stats?.courseData?.syllabus?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0))) * 100)}%
+        ```
+        When the dashboard loads, detailed course statistics (`stats`) are not yet fetched (they are only loaded on demand when clicking "Details"). Attempting to access `stats?.courseData?.syllabus?.reduce(...)` evaluates to `undefined`. Any number divided by `undefined` produces `NaN`, which renders as `NaN%`.
 - **The Solve (Code Fix)**:
-  - **File**: `frontend/src/pages/student/StudentDashboard.jsx`
-  - **Before (Buggy Code)**:
-    ```jsx
-    <div className="text-right">
-        <p className="text-2xl sm:text-3xl font-bold text-primary">
-            {Math.round((enrollment.progress?.completedLessons?.length / (stats?.courseData?.syllabus?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0))) * 100)}%
-        </p>
-    </div>
-    ```
-  - **After (Solved Code)**:
-    ```jsx
-    <div className="text-right">
-        <p className="text-2xl sm:text-3xl font-bold text-primary">
-            {enrollment.progress?.percent ?? 0}%
-        </p>
-    </div>
-    ```
+    - **File**: `frontend/src/pages/student/StudentDashboard.jsx`
+    - **Before (Buggy Code)**:
+        ```jsx
+        <div className="text-right">
+            <p className="text-2xl sm:text-3xl font-bold text-primary">
+                {Math.round(
+                    (enrollment.progress?.completedLessons?.length /
+                        stats?.courseData?.syllabus?.reduce(
+                            (acc, m) => acc + (m.lessons?.length || 0),
+                            0,
+                        )) *
+                        100,
+                )}
+                %
+            </p>
+        </div>
+        ```
+    - **After (Solved Code)**:
+        ```jsx
+        <div className="text-right">
+            <p className="text-2xl sm:text-3xl font-bold text-primary">
+                {enrollment.progress?.percent ?? 0}%
+            </p>
+        </div>
+        ```
 - **Verification Status**: **Fixed & Verified** — Course cards reliably display accurate percentage integers (e.g. `0%`, `33%`, `100%`) in perfect sync with the visual progress bar without ever showing `NaN%`.
 
 ---
