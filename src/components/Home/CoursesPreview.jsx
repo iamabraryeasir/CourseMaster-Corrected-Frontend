@@ -19,7 +19,7 @@ export default function CoursesPreview() {
                 // Fetch only 6 courses for preview
                 const res = await getCourses({ page: 1, limit: 6 });
                 setCourses(res.data.courses || []);
-            } catch (err) {
+            } catch {
                 setError("Failed to load courses");
             } finally {
                 setLoading(false);

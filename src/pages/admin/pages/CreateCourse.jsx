@@ -363,7 +363,7 @@ export default function CreateCourse() {
                                                                             if (mIdx === modIdx) {
                                                                                 const newLessons = mod.lessons.map((les, lIdx) => {
                                                                                     if (lIdx === lesIdx) {
-                                                                                        const { liveClassLink, liveClassDate, ...rest } = les;
+                                                                                        const { liveClassLink: _liveClassLink, liveClassDate: _liveClassDate, ...rest } = les;
                                                                                         return rest;
                                                                                     }
                                                                                     return les;
@@ -472,7 +472,7 @@ export default function CreateCourse() {
                                                                             if (mIdx === modIdx) {
                                                                                 const newLessons = mod.lessons.map((les, lIdx) => {
                                                                                     if (lIdx === lesIdx) {
-                                                                                        const { assignmentPrompt, ...rest } = les;
+                                                                                        const { assignmentPrompt: _assignmentPrompt, ...rest } = les;
                                                                                         return rest;
                                                                                     }
                                                                                     return les;

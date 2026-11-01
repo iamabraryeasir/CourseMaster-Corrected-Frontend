@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCourses, fetchCourseById } from "../../../store/slices/coursesSlice";
+import { fetchCourses } from "../../../store/slices/coursesSlice";
 import { updateCourseAsync } from "../../../store/slices/adminSlice";
 import { Link } from "react-router-dom";
 import { Video, Calendar, ExternalLink, Clock, Play, X, Monitor } from "lucide-react";

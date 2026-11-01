@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, BookOpen, Tag, ArrowRight, Star } from "lucide-react";
+import { BookOpen, ArrowRight, Star } from "lucide-react";
 
 export default function CourseCard({ course }) {
     const totalLessons = course.syllabus?.reduce((acc, mod) => acc + (mod.lessons?.length || 0), 0) || 0;
@@ -32,16 +32,16 @@ export default function CourseCard({ course }) {
 
             <div className="card-body p-5 flex flex-col flex-1 justify-between space-y-4">
                 <div>
-                    <h2 className="card-title text-lg sm:text-xl font-bold leading-snug group-hover:text-primary transition-colors whitespace-nowrap overflow-visible">
+                    <h2 className="card-title text-lg sm:text-xl font-bold leading-snug group-hover:text-primary transition-colors line-clamp-2">
                         {course.title}
                     </h2>
 
-                    <p className="text-sm text-base-content/70 mt-2 flex items-center gap-2">
+                    <div className="text-sm text-base-content/70 mt-2 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs">
                             {course.instructorName ? course.instructorName[0].toUpperCase() : "I"}
                         </div>
                         <span className="font-semibold text-xs text-base-content/80">By {course.instructorName}</span>
-                    </p>
+                    </div>
                 </div>
 
                 {course.tags && course.tags.length > 0 && (

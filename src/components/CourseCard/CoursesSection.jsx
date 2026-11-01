@@ -38,7 +38,7 @@ export default function CoursesSection() {
             const res = await getCourses(params);
             setCourses(res.data.courses || []);
             setTotalPages(res.data.totalPages || 1);
-        } catch (err) {
+        } catch {
             setError("Failed to load courses");
         } finally {
             setLoading(false);

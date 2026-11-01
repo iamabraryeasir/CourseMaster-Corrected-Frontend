@@ -4,29 +4,27 @@ import { getToken } from "../utils/auth";
 import { getMe } from "../services/auth.api";
 
 export default function ProtectedRoute({ children }) {
-  const [isValid, setIsValid] = useState(null);
   const token = getToken();
+  const [isValid, setIsValid] = useState(() => {
+    if (!token) return false;
+    return null;
+  });
 
   useEffect(() => {
-    // Check if dev bypass is enabled for testing/grading protected routes
-    const isBypass = localStorage.getItem("dev_bypass") === "true" || window.location.search.includes("bypass=true");
-    if (isBypass) {
-      setIsValid(true);
-      return;
-    }
+    if (!token) return;
 
-    if (!token) {
-      setIsValid(false);
-      return;
-    }
-
-    // Verify token is valid
+    let mounted = true;
     getMe()
-      .then(() => setIsValid(true))
+      .then(() => {
+        if (mounted) setIsValid(true);
+      })
       .catch(() => {
-        // Fallback: if token exists but network/server check fails, still allow if token exists
-        setIsValid(!!token);
+        if (mounted) setIsValid(false);
       });
+
+    return () => {
+      mounted = false;
+    };
   }, [token]);
 
   if (isValid === null) {

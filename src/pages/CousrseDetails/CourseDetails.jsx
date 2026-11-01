@@ -5,7 +5,7 @@ import {
     fetchCourseById,
     clearCurrentCourse,
 } from "../../store/slices/coursesSlice";
-import { enrollCourseAsync, clearSuccess } from "../../store/slices/enrollmentSlice";
+import { enrollCourseAsync, fetchMyEnrollments, clearSuccess } from "../../store/slices/enrollmentSlice";
 import { getMeAsync } from "../../store/slices/authSlice";
 
 export default function CourseDetails() {
@@ -23,10 +23,13 @@ export default function CourseDetails() {
         return () => dispatch(clearCurrentCourse());
     }, [id, dispatch]);
 
-    // Load user if token exists but user is not loaded
+    // Load user and enrollments if token exists
     useEffect(() => {
         if (token && !user) {
             dispatch(getMeAsync());
+        }
+        if (token) {
+            dispatch(fetchMyEnrollments());
         }
     }, [token, user, dispatch]);
 
@@ -37,11 +40,10 @@ export default function CourseDetails() {
     const alreadyEnrolled = !!myEnrollments?.find((e) => e.course?._id === id);
 
     const handleEnroll = async () => {
-        // if user object not present but token exists, attempt to fetch profile
         if (!user && token) {
             try {
                 await dispatch(getMeAsync()).unwrap();
-            } catch (err) {
+            } catch {
                 // ignore, will redirect to login below
             }
         }
@@ -53,8 +55,6 @@ export default function CourseDetails() {
 
         if (cannotEnroll) return;
 
-        // Note: Since batches don't have _id in the model, we pass null
-        // The backend can be updated later to handle batch references properly
         dispatch(enrollCourseAsync({ courseId: id, batchId: selectedBatchId !== null ? selectedBatchId.toString() : null }));
     };
 
@@ -113,7 +113,7 @@ export default function CourseDetails() {
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'
-                        }}>৳ {course.price * 100}</p>
+                        }}>৳ {course.price?.toLocaleString()}</p>
 
                         <div>
                             {isAdmin ? (
@@ -256,7 +256,6 @@ export default function CourseDetails() {
                         <h2 className="page-heading-h2 mb-4">Available Batches</h2>
                         <div className="space-y-2">
                             {course.batches.map((batch, idx) => {
-                                // Use index as batch identifier since batches don't have _id
                                 const batchIndex = idx;
                                 const isSelected = selectedBatchId === batchIndex;
                                 return (

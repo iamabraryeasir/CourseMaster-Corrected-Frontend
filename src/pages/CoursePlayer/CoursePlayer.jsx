@@ -255,7 +255,7 @@ export default function CoursePlayer() {
                                                         </span>
                                                         <div className="flex items-center gap-1 flex-shrink-0">
                                                             {hasLiveClass && (
-                                                                <span className="badge badge-xs badge-info" title="Has Live Class">🔴</span>
+                                                                <span className="badge badge-xs badge-info" title={isUpcoming ? `Upcoming Live: ${liveClassDate.toLocaleDateString()}` : "Live Class"}>🔴</span>
                                                             )}
                                                             {hasAssignment && (
                                                                 <span className="badge badge-xs badge-secondary" title="Has Assignment">📝</span>
@@ -768,7 +768,7 @@ function QuizInterface({ quiz, courseId, lessonId, enrollment, onComplete }) {
                                         >
                                             <input
                                                 type="radio"
-                                                name="quiz-option"
+                                                name={`quiz-option-${qIdx}`}
                                                 checked={answers[qIdx] === oIdx}
                                                 onChange={() => {
                                                     if (!loading) {

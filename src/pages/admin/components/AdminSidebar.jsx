@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
     LayoutDashboard,
     BookOpen,
@@ -14,13 +14,9 @@ import {
 
 export default function AdminSidebar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const location = useLocation();
 
-    const Item = ({ to, label, Icon, end = true, onClick, showLabel = true }) => {
-        const linkClass = ({ isActive: navIsActive }) => {
-            // Custom active check for routes with children
-            let isActive = navIsActive;
-
+    const Item = ({ to, label, Icon: IconComp, end = true, onClick, showLabel = true }) => {
+        const linkClass = ({ isActive }) => {
             const baseClasses = "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200";
             if (isActive) {
                 return `${baseClasses} bg-primary text-primary-content font-semibold shadow-md`;
@@ -35,7 +31,7 @@ export default function AdminSidebar() {
                 onClick={onClick}
                 className={linkClass}
             >
-                <Icon className="w-5 h-5 shrink-0" />
+                {IconComp && <IconComp className="w-5 h-5 shrink-0" />}
                 {showLabel && <span className="text-sm sm:text-base">{label}</span>}
             </NavLink>
         );
@@ -43,6 +39,7 @@ export default function AdminSidebar() {
 
     const menuItems = [
         { to: "/admin", label: "Overview", Icon: LayoutDashboard, end: true },
+        { to: "/admin/courses", label: "Manage Courses", Icon: BookOpen, end: true },
         { to: "/admin/courses/create", label: "Add Course", Icon: PlusCircle, end: true },
         { to: "/admin/video-classes", label: "Video Classes", Icon: Video, end: true },
         { to: "/admin/enrollments", label: "Enrollments", Icon: Users, end: true },
