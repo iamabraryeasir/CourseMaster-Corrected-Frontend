@@ -748,6 +748,46 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
+---
+
+### BUG-020: Student Dashboard Course Cards Render "NaN%" for Progress
+- **Bug ID & Title**: `BUG-020` — Unhandled division by undefined syllabus length causes Course Progress to display "NaN%"
+- **Category**: UI/UX / Data Handling / Frontend
+- **Priority & Severity**: **High / P2**
+- **Location & Steps to Reproduce**:
+  1. Log in as a Student and navigate to `/student` (Student Dashboard).
+  2. Observe the enrolled course cards in the "My Courses" section.
+- **Expected vs. Actual Result**:
+  - *Expected*: The course progress displays the student's actual progress percentage (e.g. `0%`, `25%`, `100%`), matching the progress bar.
+  - *Actual*: The progress percentage prominently renders as **`NaN%`** on all course cards.
+- **Severity & Evidence**:
+  - *Evidence*: In `frontend/src/pages/student/StudentDashboard.jsx`:
+    ```jsx
+    {Math.round((enrollment.progress?.completedLessons?.length / (stats?.courseData?.syllabus?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0))) * 100)}%
+    ```
+    When the dashboard loads, detailed course statistics (`stats`) are not yet fetched (they are only loaded on demand when clicking "Details"). Attempting to access `stats?.courseData?.syllabus?.reduce(...)` evaluates to `undefined`. Any number divided by `undefined` produces `NaN`, which renders as `NaN%`.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/student/StudentDashboard.jsx`
+  - **Before (Buggy Code)**:
+    ```jsx
+    <div className="text-right">
+        <p className="text-2xl sm:text-3xl font-bold text-primary">
+            {Math.round((enrollment.progress?.completedLessons?.length / (stats?.courseData?.syllabus?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0))) * 100)}%
+        </p>
+    </div>
+    ```
+  - **After (Solved Code)**:
+    ```jsx
+    <div className="text-right">
+        <p className="text-2xl sm:text-3xl font-bold text-primary">
+            {enrollment.progress?.percent ?? 0}%
+        </p>
+    </div>
+    ```
+- **Verification Status**: **Fixed & Verified** — Course cards reliably display accurate percentage integers (e.g. `0%`, `33%`, `100%`) in perfect sync with the visual progress bar without ever showing `NaN%`.
+
+---
+
 ## Summary of Verification & Status
 
 All 18 bugs (9 Backend, 9 Frontend) have been fixed, verified, and documented. Frontend builds cleanly with zero ESLint warnings and zero TypeScript/Vite bundle errors. Backend routes, authentication, database queries, and middleware logic have all been confirmed working as expected.
