@@ -23,7 +23,9 @@ All issues have been corrected across the frontend and backend repositories foll
 
 ---
 
-## Bug Reports
+## Complete Bug Reports & Exact Code Solves
+
+---
 
 ### BUG-001: Plaintext Password Comparison Breaks All User Authentication
 - **Bug ID & Title**: `BUG-001` — Plaintext password comparison breaks user login (Code-5 bug)
@@ -31,21 +33,29 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Priority & Severity**: **Critical / P1**
 - **Location & Steps to Reproduce**:
   1. Navigate to `/login`.
-  2. Input valid registered/seeded credentials (e.g., `admin@coursemaster.com` / `admin123` or `student@coursemaster.com` / `student123`).
+  2. Input valid credentials (e.g. `admin@coursemaster.com` / `admin123` or `student@coursemaster.com` / `student123`).
   3. Click "Sign In".
 - **Expected vs. Actual Result**:
-  - *Expected*: The user credentials should be compared against the stored bcrypt hash using `bcrypt.compare()`, generating a JWT and redirecting to the authenticated dashboard.
-  - *Actual*: Server responds with HTTP 400 `"Invalid email or password"`. Login fails for every user in the database.
+  - *Expected*: Password verified against stored bcrypt hash using `bcrypt.compare()`, generating a JWT and logging in.
+  - *Actual*: Server responds with HTTP 400 `"Invalid email or password"`. All logins fail.
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/auth.service.js`:
+    Comparing plaintext password `'admin123'` directly with salted bcrypt hash `'$2b$10$...'` always evaluates to `false`.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/auth.service.js`
+  - **Before (Buggy Code)**:
     ```javascript
     // Code-5 bug: plaintext equality check instead of bcrypt.compare
     const match = (password === user.passwordHash);
+    if (!match) throw new Error("Invalid email or password");
     ```
-    Comparing plaintext password `'admin123'` directly with salted bcrypt hash `'$2b$10$...'` always yields `false`.
-- **Fix & Verification Status**:
-  - *Fix*: Replaced equality check with `const match = await bcrypt.compare(password, user.passwordHash);`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    // Secure asynchronous hash comparison with bcrypt
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) throw new Error("Invalid email or password");
+    ```
+- **Verification Status**: **Fixed & Verified** — Both admin and student login authenticate successfully and store JWT.
 
 ---
 
@@ -55,27 +65,44 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Priority & Severity**: **Critical / P1**
 - **Location & Steps to Reproduce**:
   1. Log in as a student.
-  2. Navigate to any course details page (e.g., `/courses/:id`).
-  3. Click the "Enroll Now" button.
+  2. Navigate to any course details page (`/courses/:id`).
+  3. Click "Enroll Now".
 - **Expected vs. Actual Result**:
-  - *Expected*: When the student is not yet enrolled, the system creates an enrollment record in MongoDB and returns HTTP 201.
-  - *Actual*: Server responds with HTTP 400 `"Already enrolled in this course"` when the user is NOT enrolled, completely blocking new enrollments. Conversely, if already enrolled, it attempts duplicate record creation.
+  - *Expected*: When the student is not yet enrolled, create an enrollment record in MongoDB and return HTTP 201.
+  - *Actual*: Server responds with HTTP 400 `"Already enrolled in this course"` when the user is NOT enrolled (`!enrollment`).
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/enrollment.service.js`:
+    Inverted `if (!enrollment)` check triggers an error when no enrollment exists.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/enrollment.service.js`
+  - **Before (Buggy Code)**:
     ```javascript
-    let enrollment = await Enrollment.findOne({ student: studentId, course: courseId });
+    let enrollment = await Enrollment.findOne({
+      student: studentId,
+      course: courseId,
+    });
+
     if (!enrollment) {
       // Inverted logic bug: throws error when NOT enrolled
       throw new Error("Already enrolled in this course");
     }
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Corrected condition to `if (enrollment) { throw new Error("Already enrolled in this course"); }`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    let enrollment = await Enrollment.findOne({
+      student: studentId,
+      course: courseId,
+    });
+
+    if (enrollment) {
+      throw new Error("Already enrolled in this course");
+    }
+    ```
+- **Verification Status**: **Fixed & Verified** — Students can now enroll in courses without error.
 
 ---
 
-### BUG-003: Redux Store Payload Error Causes Student Dashboard Application Crash
+### BUG-003: Redux Store Payload Error Causes Student Dashboard Crash
 - **Bug ID & Title**: `BUG-003` — Redux store payload access error crashes Student Dashboard (Code-6 bug)
 - **Category**: Data Handling / Frontend State Management
 - **Priority & Severity**: **Critical / P1**
@@ -83,10 +110,14 @@ All issues have been corrected across the frontend and backend repositories foll
   1. Log in as a student.
   2. Navigate to the Student Dashboard at `/student`.
 - **Expected vs. Actual Result**:
-  - *Expected*: Enrolled courses list should render with progress percentages and access to the course player.
-  - *Actual*: Application crashes with `TypeError: Cannot read properties of undefined (reading 'length')` at `StudentDashboard.jsx:172`.
+  - *Expected*: Dashboard renders the list of enrolled courses with progress bars.
+  - *Actual*: Entire page crashes with `TypeError: Cannot read properties of undefined (reading 'length')` at `StudentDashboard.jsx:172`.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/store/slices/enrollmentSlice.js`:
+    `fetchMyEnrollments` thunk returns `res.data` (the array). Accessing `.data` in the reducer produced `undefined`.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/store/slices/enrollmentSlice.js`
+  - **Before (Buggy Code)**:
     ```javascript
     .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
         state.loading = false;
@@ -94,10 +125,14 @@ All issues have been corrected across the frontend and backend repositories foll
         state.enrollments = action.payload.data;
     })
     ```
-    `res.data` was already returned by the thunk as an array. Accessing `.data` resulted in `undefined`, crashing `enrollments.length`.
-- **Fix & Verification Status**:
-  - *Fix*: Updated reducer to `state.enrollments = action.payload || [];`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    .addCase(fetchMyEnrollments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.enrollments = action.payload || [];
+    })
+    ```
+- **Verification Status**: **Fixed & Verified** — Enrolled courses and progress statistics load and render seamlessly.
 
 ---
 
@@ -106,12 +141,16 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Authentication & Authorization / Security
 - **Priority & Severity**: **Critical / P1**
 - **Location & Steps to Reproduce**:
-  1. Send an HTTP request to any protected route (e.g., `GET /api/enrollments/my` or `GET /api/assignments/my`) with an invalid or expired JWT header `Authorization: Bearer invalid_token`.
+  1. Send an HTTP request to any protected route (e.g., `GET /api/enrollments/my`) with an invalid or expired token.
 - **Expected vs. Actual Result**:
-  - *Expected*: Server responds with HTTP 401 Unauthorized `{ message: "Invalid or expired token" }`.
-  - *Actual*: Middleware swallows the error and calls `next()`, leaving `req.user` undefined. Subsequent route handlers throw unhandled `Cannot read properties of undefined (reading 'id')` or bypass security checks.
+  - *Expected*: Request rejected immediately with HTTP 401 Unauthorized.
+  - *Actual*: Middleware swallowed the error and called `next()`, leaving `req.user` undefined and causing unhandled crashes or authorization bypass.
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/middlewares/authMiddleware.js`:
+    `catch` block called `next()` instead of returning HTTP 401.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/middlewares/authMiddleware.js`
+  - **Before (Buggy Code)**:
     ```javascript
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -122,9 +161,17 @@ All issues have been corrected across the frontend and backend repositories foll
       next();
     }
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Updated `catch` block to return `res.status(401).json({ message: "Invalid or expired token" });`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+      next();
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+    ```
+- **Verification Status**: **Fixed & Verified** — Invalid and expired tokens are rejected with HTTP 401.
 
 ---
 
@@ -133,13 +180,19 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Authentication & Authorization / Security
 - **Priority & Severity**: **Critical / P1**
 - **Location & Steps to Reproduce**:
-  1. Send a registration request `POST /api/auth/register` with `{ name: "Hacker", email: "h@h.com", password: "password", role: "admin" }` without providing `adminKey`.
-  2. Send a registration request with a valid `adminKey`.
+  1. Send a registration request `POST /api/auth/register` with `{ role: "admin" }` without `adminKey`.
+  2. Send a registration request with the correct `adminKey`.
 - **Expected vs. Actual Result**:
-  - *Expected*: Users should only be assigned the `admin` role if they provide a valid `adminKey` matching `process.env.ADMIN_REGISTRATION_KEY`. Otherwise, the role must default to `"student"`.
-  - *Actual*: Any user could directly escalate privileges to admin by passing `role: "admin"`. Conversely, a legitimate admin entering a valid `adminKey` remained a `"student"` because `adminKey` was ignored.
+  - *Expected*: User only gains `admin` role when providing the valid `ADMIN_REGISTRATION_KEY`. Otherwise defaults to `"student"`.
+  - *Actual*: Any user could become admin simply by passing `role: "admin"`. Legitimate users entering `adminKey` were ignored and remained `"student"`.
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/auth.service.js`:
+    ```javascript
+    role: role || "student"
+    ```
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/auth.service.js`
+  - **Before (Buggy Code)**:
     ```javascript
     // Code-12 bug: user can pass role directly in payload without adminKey verification
     const user = await User.create({
@@ -149,9 +202,9 @@ All issues have been corrected across the frontend and backend repositories foll
       role: role || "student",
     });
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Added server-side validation for `adminKey`:
+  - **After (Solved Code)**:
     ```javascript
+    // Validate admin key to prevent unauthorized privilege escalation
     let assignedRole = "student";
     if (adminKey) {
       if (process.env.ADMIN_REGISTRATION_KEY && adminKey === process.env.ADMIN_REGISTRATION_KEY) {
@@ -160,33 +213,49 @@ All issues have been corrected across the frontend and backend repositories foll
         throw new Error("Invalid admin registration key");
       }
     }
+
+    const user = await User.create({
+      name,
+      email,
+      passwordHash,
+      role: assignedRole,
+    });
     ```
-  - *Status*: **Fixed & Verified**
+- **Verification Status**: **Fixed & Verified** — Verified role defaults to student, invalid admin key throws error, and correct key assigns admin.
 
 ---
 
-### BUG-006: Custom CORS Header Restricts Allowed Methods and Blocks PUT/PATCH/DELETE Preflight
+### BUG-006: Custom CORS Header Restricts Allowed Methods and Blocks PUT/PATCH/DELETE
 - **Bug ID & Title**: `BUG-006` — Custom header restricts allowed methods to GET/POST, breaking PUT/PATCH/DELETE (Code-10 bug)
 - **Category**: API Integration / Security / CORS
 - **Priority & Severity**: **High / P1**
 - **Location & Steps to Reproduce**:
-  1. Log in as Admin.
-  2. Attempt to edit a course (`PATCH /api/admin/courses/:id`), delete a course (`DELETE /api/admin/courses/:id`), review an assignment (`PATCH /api/admin/assignments/:id/review`), or update a user role (`PATCH /api/users/:id/role`).
+  1. In the frontend or browser console, perform any `PATCH` (edit course, review assignment) or `DELETE` (delete course, delete user) request.
 - **Expected vs. Actual Result**:
-  - *Expected*: Browser preflight `OPTIONS` request succeeds and the `PATCH`/`DELETE` request modifies the resource.
-  - *Actual*: Browser blocks the request with `Method PATCH is not allowed by Access-Control-Allow-Methods in preflight response`.
+  - *Expected*: CORS preflight `OPTIONS` succeeds and request executes.
+  - *Actual*: Browser blocks request with `Method PATCH is not allowed by Access-Control-Allow-Methods in preflight response`.
 - **Severity & Evidence**:
   - *Evidence*: `backend/app.js`:
+    `res.header("Access-Control-Allow-Methods", "GET, POST");` overrode CORS headers.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/app.js`
+  - **Before (Buggy Code)**:
     ```javascript
+    app.use(cors());
     // Code-10 bug: custom header restricts allowed methods to GET and POST, breaking PUT/DELETE CORS preflights
     app.use((req, res, next) => {
       res.header("Access-Control-Allow-Methods", "GET, POST");
       next();
     });
+    app.use(express.json());
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Removed the restrictive override header and configured Express CORS middleware to permit `GET, POST, PUT, PATCH, DELETE, OPTIONS`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    // Enable CORS with full method support for preflights (PUT/PATCH/DELETE)
+    app.use(cors());
+    app.use(express.json());
+    ```
+- **Verification Status**: **Fixed & Verified** — `PATCH`, `DELETE`, and `PUT` preflight requests succeed without CORS issues.
 
 ---
 
@@ -196,20 +265,28 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Priority & Severity**: **High / P2**
 - **Location & Steps to Reproduce**:
   1. Open the Course Player (`/courses/:id/player`).
-  2. Click "Mark Lesson Complete" or submit a quiz/assignment.
+  2. Click "Mark Lesson Complete".
 - **Expected vs. Actual Result**:
-  - *Expected*: The updated completion array and progress percentage are saved to MongoDB before the API responds.
-  - *Actual*: `enrollment.save()` runs without `await`, causing race conditions, unhandled rejections on failure, and stale progress returned to the client.
+  - *Expected*: Progress percentage and completed lessons array are committed to MongoDB before API responds.
+  - *Actual*: `enrollment.save()` was unawaited, causing dropped progress and race conditions.
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/enrollment.service.js`:
+    `enrollment.save();` called without `await`.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/enrollment.service.js`
+  - **Before (Buggy Code)**:
     ```javascript
     // Missing await on async Mongoose save (Code-9 bug)
     enrollment.save();
     return enrollment;
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Added `await enrollment.save();`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    // Await the asynchronous save operation
+    await enrollment.save();
+    return enrollment;
+    ```
+- **Verification Status**: **Fixed & Verified** — Lesson completions and progress calculations persist reliably.
 
 ---
 
@@ -218,21 +295,26 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Functional Bugs / Data Handling
 - **Priority & Severity**: **High / P2**
 - **Location & Steps to Reproduce**:
-  1. Log in as a student and open a lesson containing a quiz.
-  2. Answer all questions correctly (e.g. 2 out of 2) and submit the quiz.
-  3. View the score feedback or student dashboard statistics.
+  1. Complete a quiz lesson with 2/2 correct answers and submit.
 - **Expected vs. Actual Result**:
-  - *Expected*: A score of 2/2 should yield 100% score.
-  - *Actual*: The score is recorded as 10% (and 1/2 is recorded as 5%).
+  - *Expected*: Score percentage is 100%.
+  - *Actual*: Score percentage saved and displayed was 10% (and 1/2 was 5%).
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/quiz.service.js`:
+    `const percent = Math.round((score / total) * 10);`
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/quiz.service.js`
+  - **Before (Buggy Code)**:
     ```javascript
     // Code-4 bug: multiplied by 10 instead of 100
     const percent = Math.round((score / total) * 10);
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Corrected formula to `const percent = Math.round((score / total) * 100);`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    // Calculate percentage correctly (out of 100)
+    const percent = Math.round((score / total) * 100);
+    ```
+- **Verification Status**: **Fixed & Verified** — Accurate percentages (100%, 50%, etc.) calculated and displayed.
 
 ---
 
@@ -241,48 +323,68 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: API Integration / Backend & Database
 - **Priority & Severity**: **High / P2**
 - **Location & Steps to Reproduce**:
-  1. Log in as Admin.
-  2. Navigate to the Assignments Review page at `/admin/assignments`.
-  3. Filter assignments by a specific course.
+  1. Log in as Admin and open `/admin/assignments`.
+  2. Select a course from the filter dropdown.
 - **Expected vs. Actual Result**:
-  - *Expected*: Submissions for the selected course are retrieved and displayed.
-  - *Actual*: Controller did not pass `req.query` to `adminService.getAssignments()`, and `adminService` queried `{ courseId: ... }` when the Mongoose schema field is named `course`, returning 0 records.
+  - *Expected*: Submissions for the selected course are shown.
+  - *Actual*: 0 submissions returned because controller omitted `req.query` and service queried non-existent field `courseId`.
 - **Severity & Evidence**:
   - *Evidence*:
-    `backend/src/controllers/admin.controller.js`:
-    `const data = await adminService.getAssignments();` (omitted `req.query`).
-    `backend/src/services/admin.service.js`:
-    `if (query.courseId) filter.courseId = query.courseId;`
-- **Fix & Verification Status**:
-  - *Fix*: Forwarded `req.query` from `admin.controller.js`, and updated service to `if (query.courseId) filter.course = query.courseId;`.
-  - *Status*: **Fixed & Verified**
+    `admin.controller.js`: `adminService.getAssignments()` (no args passed).
+    `admin.service.js`: `if (query.courseId) filter.courseId = query.courseId;`
+- **The Solve (Code Fix)**:
+  - **File 1**: `backend/src/controllers/admin.controller.js`
+    ```javascript
+    // Before:
+    const data = await adminService.getAssignments();
+    // After:
+    const data = await adminService.getAssignments(req.query);
+    ```
+  - **File 2**: `backend/src/services/admin.service.js`
+    ```javascript
+    // Before:
+    if (query.courseId) filter.courseId = query.courseId;
+    // After:
+    if (query.courseId) filter.course = query.courseId;
+    ```
+- **Verification Status**: **Fixed & Verified** — Course-based assignment filtering retrieves all matching records.
 
 ---
 
-### BUG-010: Identical Radio Name Attribute Across All Quiz Questions Prevents Multiple Answers
-- **Bug ID & Title**: `BUG-010` — Global radio button group name prevents answering multiple quiz questions
+### BUG-010: Identical Radio Name Attribute Across All Quiz Questions
+- **Bug ID & Title**: `BUG-010` — Global radio group name prevents answering multiple quiz questions
 - **Category**: Functional Bugs / UI/UX
 - **Priority & Severity**: **High / P2**
 - **Location & Steps to Reproduce**:
-  1. Open a course with a quiz containing multiple questions in the Course Player (`/courses/:id/player`).
-  2. Select an answer for Question 1.
-  3. Select an answer for Question 2.
+  1. Open a multi-question quiz in `/courses/:id/player`.
+  2. Select an option for Question 1, then select an option for Question 2.
 - **Expected vs. Actual Result**:
-  - *Expected*: Question 1 retains its selected option, and Question 2 has its own selected option.
-  - *Actual*: Selecting an option in Question 2 immediately deselects the option in Question 1 because both HTML radio inputs share the identical `name="quiz-option"`.
+  - *Expected*: Each question maintains its selected choice independently.
+  - *Actual*: Selecting Question 2 unchecks Question 1 because all radio buttons shared `name="quiz-option"`.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/pages/CoursePlayer/CoursePlayer.jsx`:
+    `<input type="radio" name="quiz-option" ... />`
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/CoursePlayer/CoursePlayer.jsx`
+  - **Before (Buggy Code)**:
     ```jsx
     <input
-      type="radio"
-      name="quiz-option"
-      checked={answers[qIdx] === oIdx}
-      ...
+        type="radio"
+        name="quiz-option"
+        checked={answers[qIdx] === oIdx}
+        onChange={() => { ... }}
     />
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Scoped the radio name per question: `name={`quiz-option-${qIdx}`}`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```jsx
+    <input
+        type="radio"
+        name={`quiz-option-${qIdx}`}
+        checked={answers[qIdx] === oIdx}
+        onChange={() => { ... }}
+    />
+    ```
+- **Verification Status**: **Fixed & Verified** — Students can select distinct answers for every question in the quiz.
 
 ---
 
@@ -291,17 +393,35 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Functional Bugs / State Synchronization
 - **Priority & Severity**: **Medium / P2**
 - **Location & Steps to Reproduce**:
-  1. Enroll in a course.
-  2. Refresh the browser or navigate directly via URL to `/courses/:courseId`.
+  1. Direct-navigate or refresh `/courses/:courseId` as an enrolled student.
 - **Expected vs. Actual Result**:
-  - *Expected*: The page recognizes the student is already enrolled and displays "Go to Dashboard" and the Course Syllabus.
-  - *Actual*: Redux `myEnrollments` is unpopulated, showing "Enroll Now" and hiding the syllabus. Clicking "Enroll Now" produces an enrollment error.
+  - *Expected*: Recognized as enrolled: button shows "Go to Dashboard" and syllabus is accessible.
+  - *Actual*: Redux `myEnrollments` was empty, showing "Enroll Now" and hiding the syllabus.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/pages/CousrseDetails/CourseDetails.jsx`:
-    `useEffect` only fetched `fetchCourseById(id)` and never dispatched `fetchMyEnrollments()`.
-- **Fix & Verification Status**:
-  - *Fix*: Added `dispatch(fetchMyEnrollments())` when `token` is present.
-  - *Status*: **Fixed & Verified**
+    `fetchMyEnrollments()` was never dispatched on page load.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/CousrseDetails/CourseDetails.jsx`
+  - **Before (Buggy Code)**:
+    ```javascript
+    useEffect(() => {
+        if (token && !user) {
+            dispatch(getMeAsync());
+        }
+    }, [token, user, dispatch]);
+    ```
+  - **After (Solved Code)**:
+    ```javascript
+    useEffect(() => {
+        if (token && !user) {
+            dispatch(getMeAsync());
+        }
+        if (token) {
+            dispatch(fetchMyEnrollments());
+        }
+    }, [token, user, dispatch]);
+    ```
+- **Verification Status**: **Fixed & Verified** — Enrolled state syncs immediately upon direct navigation.
 
 ---
 
@@ -310,19 +430,25 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: UI/UX / Data Display
 - **Priority & Severity**: **Medium / P2**
 - **Location & Steps to Reproduce**:
-  1. Navigate to any course details page (e.g. `/courses/:id`).
-  2. Observe the displayed course fee.
+  1. Navigate to `/courses/:id`.
+  2. Observe the course price header.
 - **Expected vs. Actual Result**:
-  - *Expected*: Course price displays the real price (e.g., `৳ 5,000`).
-  - *Actual*: Price displays as `৳ 500000` (5 lakhs).
+  - *Expected*: Displays actual course price (e.g. `৳ 5,000`).
+  - *Actual*: Displayed `৳ 500000` (5 lakhs).
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/pages/CousrseDetails/CourseDetails.jsx`:
+    `<p ...>৳ {course.price * 100}</p>`
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/CousrseDetails/CourseDetails.jsx`
+  - **Before (Buggy Code)**:
     ```jsx
-    <p className="text-2xl sm:text-3xl font-bold" ...>৳ {course.price * 100}</p>
+    <p className="text-2xl sm:text-3xl font-bold" style={{ ... }}>৳ {course.price * 100}</p>
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Replaced `course.price * 100` with `course.price?.toLocaleString()`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```jsx
+    <p className="text-2xl sm:text-3xl font-bold" style={{ ... }}>৳ {course.price?.toLocaleString()}</p>
+    ```
+- **Verification Status**: **Fixed & Verified** — Prices match course fee accurately across all views.
 
 ---
 
@@ -331,42 +457,64 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: UI/UX
 - **Priority & Severity**: **Medium / P3**
 - **Location & Steps to Reproduce**:
-  1. Navigate to any route (Home `/`, Courses `/courses`, or Dashboard).
-  2. Observe the desktop and mobile navigation links.
+  1. Navigate to any page and inspect the top navbar links.
 - **Expected vs. Actual Result**:
-  - *Expected*: Only the link corresponding to the current active route should display the active primary styling.
-  - *Actual*: Home, Courses, and Dashboard are all highlighted in bold primary color at all times.
+  - *Expected*: Only the currently active page link is highlighted.
+  - *Actual*: Home, Courses, and Dashboard were all highlighted as active simultaneously.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/components/shared/Navbar.jsx`:
+    `(isActive || window.location.pathname.startsWith("/"))` — always true.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/components/shared/Navbar.jsx`
+  - **Before (Buggy Code)**:
     ```javascript
     const navLinkClass = ({ isActive, to }) =>
         (isActive || window.location.pathname.startsWith("/"))
             ? "text-primary font-semibold"
             : "text-base-content/80 hover:text-primary";
     ```
-    Every URL pathname begins with `"/"`, so this expression always evaluated to `true`.
-- **Fix & Verification Status**:
-  - *Fix*: Corrected to `const navLinkClass = ({ isActive }) => isActive ? "text-primary font-semibold" : "text-base-content/80 hover:text-primary";`.
-  - *Status*: **Fixed & Verified**
+  - **After (Solved Code)**:
+    ```javascript
+    const navLinkClass = ({ isActive }) =>
+        isActive
+            ? "text-primary font-semibold"
+            : "text-base-content/80 hover:text-primary";
+    ```
+- **Verification Status**: **Fixed & Verified** — Active highlighting reflects only the current route.
 
 ---
 
-### BUG-014: Mobile Navigation Menu Cut Off by Height and Overflow Constraints
+### BUG-014: Mobile Navigation Menu Cut Off by Height & Overflow Constraints
 - **Bug ID & Title**: `BUG-014` — Mobile dropdown menu clipped by `max-h-32 overflow-hidden`
 - **Category**: UI/UX / Responsiveness
 - **Priority & Severity**: **Medium / P3**
 - **Location & Steps to Reproduce**:
-  1. Open the application in mobile viewport (< 768px).
-  2. Click the hamburger menu icon in the navbar.
+  1. Open app on mobile (< 768px) and click the hamburger menu icon.
 - **Expected vs. Actual Result**:
-  - *Expected*: The full dropdown menu displays all options including Home, Courses, Dashboard, Profile, and Login/Logout.
-  - *Actual*: The menu is restricted to 128px (`max-h-32`) and hidden overflow, truncating items and rendering action buttons completely unclickable.
+  - *Expected*: Full menu items and account actions visible.
+  - *Actual*: Menu restricted to 128px height, hiding bottom buttons.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/components/shared/Navbar.jsx`:
     `className="... max-h-32 overflow-hidden ..."`
-- **Fix & Verification Status**:
-  - *Fix*: Changed classes to `max-h-[80vh] overflow-y-auto`.
-  - *Status*: **Fixed & Verified**
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/components/shared/Navbar.jsx`
+  - **Before (Buggy Code)**:
+    ```jsx
+    className="
+        menu menu-sm dropdown-content mt-3 p-3 shadow
+        bg-base-100 rounded-box w-56 border border-base-300
+        items-center text-center max-h-32 overflow-hidden
+    "
+    ```
+  - **After (Solved Code)**:
+    ```jsx
+    className="
+        menu menu-sm dropdown-content mt-3 p-3 shadow
+        bg-base-100 rounded-box w-56 border border-base-300
+        items-center text-center max-h-[80vh] overflow-y-auto
+    "
+    ```
+- **Verification Status**: **Fixed & Verified** — All menu items accessible and scrollable on mobile devices.
 
 ---
 
@@ -375,18 +523,34 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Authentication & Authorization / Security
 - **Priority & Severity**: **Medium / P3**
 - **Location & Steps to Reproduce**:
-  1. Log in as admin and ban a user via `/admin/users`.
-  2. In another browser or incognito session, log in with the banned user's credentials.
+  1. Admin bans a user account in `/admin/users`.
+  2. Banned user attempts to log in at `/login`.
 - **Expected vs. Actual Result**:
-  - *Expected*: Login attempt is denied with an appropriate message explaining account suspension.
-  - *Actual*: Login succeeds and a valid JWT token is issued, bypassing the administrative ban.
+  - *Expected*: Login blocked with suspension notice.
+  - *Actual*: Login succeeded and JWT token was issued.
 - **Severity & Evidence**:
   - *Evidence*: `backend/src/services/auth.service.js`:
-    `login()` function checked email and password hash, but never checked `user.isBanned`.
-- **Fix & Verification Status**:
-  - *Fix*: Added check in `auth.service.js`:
-    `if (user.isBanned) throw new Error("Your account has been suspended. Please contact support.");`.
-  - *Status*: **Fixed & Verified**
+    `login()` lacked `isBanned` check.
+- **The Solve (Code Fix)**:
+  - **File**: `backend/src/services/auth.service.js`
+  - **Before (Buggy Code)**:
+    ```javascript
+    const login = async ({ email, password }) => {
+      const user = await User.findOne({ email });
+      if (!user) throw new Error("Invalid email or password");
+      // No banned check
+    ```
+  - **After (Solved Code)**:
+    ```javascript
+    const login = async ({ email, password }) => {
+      const user = await User.findOne({ email });
+      if (!user) throw new Error("Invalid email or password");
+
+      if (user.isBanned) {
+        throw new Error("Your account has been suspended. Please contact support.");
+      }
+    ```
+- **Verification Status**: **Fixed & Verified** — Suspended accounts are immediately blocked from logging in.
 
 ---
 
@@ -395,16 +559,31 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: Functional Bugs / Navigation
 - **Priority & Severity**: **Medium / P3**
 - **Location & Steps to Reproduce**:
-  1. Log in as Admin and view the Admin Sidebar on desktop or mobile.
+  1. Log in as Admin and view sidebar navigation.
 - **Expected vs. Actual Result**:
-  - *Expected*: Sidebar includes direct link to view and manage existing courses (`/admin/courses`).
-  - *Actual*: Sidebar only had "Overview", "Add Course", "Video Classes", "Enrollments", "Assignments", "Analytics", and "Manage Users". The route `/admin/courses` was inaccessible from the sidebar.
+  - *Expected*: Includes link to `/admin/courses` (Manage Courses).
+  - *Actual*: Only "Add Course" was present; "Manage Courses" was missing.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/pages/admin/components/AdminSidebar.jsx`:
-    `BookOpen` icon was imported but omitted from `menuItems`.
-- **Fix & Verification Status**:
-  - *Fix*: Added `{ to: "/admin/courses", label: "Manage Courses", Icon: BookOpen, end: true }` to `menuItems`.
-  - *Status*: **Fixed & Verified**
+    `menuItems` omitted `/admin/courses`.
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/admin/components/AdminSidebar.jsx`
+  - **Before (Buggy Code)**:
+    ```javascript
+    const menuItems = [
+        { to: "/admin", label: "Overview", Icon: LayoutDashboard, end: true },
+        { to: "/admin/courses/create", label: "Add Course", Icon: PlusCircle, end: true },
+        ...
+    ```
+  - **After (Solved Code)**:
+    ```javascript
+    const menuItems = [
+        { to: "/admin", label: "Overview", Icon: LayoutDashboard, end: true },
+        { to: "/admin/courses", label: "Manage Courses", Icon: BookOpen, end: true },
+        { to: "/admin/courses/create", label: "Add Course", Icon: PlusCircle, end: true },
+        ...
+    ```
+- **Verification Status**: **Fixed & Verified** — Admin can navigate directly to the course management table.
 
 ---
 
@@ -413,18 +592,26 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: UI/UX / Accessibility
 - **Priority & Severity**: **Low / P4**
 - **Location & Steps to Reproduce**:
-  1. Toggle theme to Dark Mode using the header moon/sun icon.
-  2. Log in as Admin and navigate to `/admin/users`.
-  3. Inspect the user table.
+  1. Toggle Dark Mode and navigate to `/admin/users`.
 - **Expected vs. Actual Result**:
-  - *Expected*: Email text adapts to theme colors with high contrast on dark backgrounds.
-  - *Actual*: Email cell has inline hardcoded `#1e293b` (slate-800), rendering it nearly black against dark slate background.
+  - *Expected*: High contrast email text matching theme.
+  - *Actual*: Hardcoded `#1e293b` rendered black text on dark background.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/pages/admin/pages/ManageUsers.jsx`:
     `<td style={{ color: '#1e293b' }}>{userItem.email}</td>`
-- **Fix & Verification Status**:
-  - *Fix*: Replaced inline style with responsive theme utility `className="text-base-content/80"`.
-  - *Status*: **Fixed & Verified**
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/pages/admin/pages/ManageUsers.jsx`
+  - **Before (Buggy Code)**:
+    ```jsx
+    <td className="font-semibold">{userItem.name}</td>
+    <td style={{ color: '#1e293b' }}>{userItem.email}</td>
+    ```
+  - **After (Solved Code)**:
+    ```jsx
+    <td className="font-semibold">{userItem.name}</td>
+    <td className="text-base-content/80">{userItem.email}</td>
+    ```
+- **Verification Status**: **Fixed & Verified** — Clear, accessible typography in both light and dark themes.
 
 ---
 
@@ -433,41 +620,25 @@ All issues have been corrected across the frontend and backend repositories foll
 - **Category**: UI/UX / Layout
 - **Priority & Severity**: **Low / P4**
 - **Location & Steps to Reproduce**:
-  1. Navigate to `/courses` or Home `/`.
-  2. View courses with long titles (e.g. "Complete Web Development Masterclass with Next.js & React 19").
+  1. View `/courses` with courses having long titles.
 - **Expected vs. Actual Result**:
-  - *Expected*: Course titles wrap neatly onto two lines within card boundaries.
-  - *Actual*: Title is forced onto one line (`whitespace-nowrap`), overflowing into neighboring cards and offscreen.
+  - *Expected*: Title wraps neatly onto two lines within card.
+  - *Actual*: Title forced onto one line, bleeding into neighboring cards.
 - **Severity & Evidence**:
   - *Evidence*: `frontend/src/components/CourseCard/CourseCard.jsx`:
+    `whitespace-nowrap overflow-visible`
+- **The Solve (Code Fix)**:
+  - **File**: `frontend/src/components/CourseCard/CourseCard.jsx`
+  - **Before (Buggy Code)**:
     ```jsx
     <h2 className="card-title text-lg sm:text-xl font-bold leading-snug group-hover:text-primary transition-colors whitespace-nowrap overflow-visible">
+        {course.title}
+    </h2>
     ```
-- **Fix & Verification Status**:
-  - *Fix*: Replaced `whitespace-nowrap overflow-visible` with `line-clamp-2`.
-  - *Status*: **Fixed & Verified**
-
----
-
-## Verification & Test Results Matrix
-
-| Bug ID | Title | Severity | Priority | Status |
-| :--- | :--- | :---: | :---: | :---: |
-| **BUG-001** | Plaintext password check breaking login | Critical | P1 | **Fixed & Verified** |
-| **BUG-002** | Inverted enrollment logic blocking students | Critical | P1 | **Fixed & Verified** |
-| **BUG-003** | Redux enrollment payload undefined crash | Critical | P1 | **Fixed & Verified** |
-| **BUG-004** | Auth middleware silent failure on invalid JWT | Critical | P1 | **Fixed & Verified** |
-| **BUG-005** | Privilege escalation & ignored admin registration key | Critical | P1 | **Fixed & Verified** |
-| **BUG-006** | CORS preflight restricting PUT/PATCH/DELETE | High | P1 | **Fixed & Verified** |
-| **BUG-007** | Unawaited async Mongoose `enrollment.save()` | High | P2 | **Fixed & Verified** |
-| **BUG-008** | Quiz score percentage multiplied by 10 instead of 100 | High | P2 | **Fixed & Verified** |
-| **BUG-009** | Admin assignments course filter query mismatch | High | P2 | **Fixed & Verified** |
-| **BUG-010** | Identical radio button group name across quiz questions | High | P2 | **Fixed & Verified** |
-| **BUG-011** | Course Details missing direct enrollment fetch | Medium | P2 | **Fixed & Verified** |
-| **BUG-012** | Course price overinflated by 100x multiplier | Medium | P2 | **Fixed & Verified** |
-| **BUG-013** | All navbar links permanently highlighted active | Medium | P3 | **Fixed & Verified** |
-| **BUG-014** | Mobile navigation dropdown clipped by `max-h-32` | Medium | P3 | **Fixed & Verified** |
-| **BUG-015** | Banned user accounts able to log in | Medium | P3 | **Fixed & Verified** |
-| **BUG-016** | Admin sidebar missing "Manage Courses" link | Medium | P3 | **Fixed & Verified** |
-| **BUG-017** | User email invisible in Dark Mode | Low | P4 | **Fixed & Verified** |
-| **BUG-018** | Course card title overflowing card container | Low | P4 | **Fixed & Verified** |
+  - **After (Solved Code)**:
+    ```jsx
+    <h2 className="card-title text-lg sm:text-xl font-bold leading-snug group-hover:text-primary transition-colors line-clamp-2">
+        {course.title}
+    </h2>
+    ```
+- **Verification Status**: **Fixed & Verified** — Course cards maintain consistent grid layout and titles wrap cleanly.
